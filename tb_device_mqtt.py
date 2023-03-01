@@ -1,18 +1,49 @@
+import time
+from math import ceil
+
+from sdk_utils import verify_checksum
 from umqtt import MQTTClient, MQTTException
 import ujson
 import ubinascii
 import machine
 
 
+FW_TITLE_ATTR = "fw_title"
+FW_VERSION_ATTR = "fw_version"
+FW_CHECKSUM_ATTR = "fw_checksum"
+FW_CHECKSUM_ALG_ATTR = "fw_checksum_algorithm"
+FW_SIZE_ATTR = "fw_size"
+FW_STATE_ATTR = "fw_state"
+
+REQUIRED_SHARED_KEYS = "{0},{1},{2},{3},{4}".format(FW_CHECKSUM_ATTR, FW_CHECKSUM_ALG_ATTR, FW_SIZE_ATTR, FW_TITLE_ATTR,
+                                                    FW_VERSION_ATTR)
+
+RPC_REQUEST_TOPIC = 'v1/devices/me/rpc/request/'
+RPC_RESPONSE_TOPIC = 'v1/devices/me/rpc/response/'
+ATTRIBUTES_TOPIC = 'v1/devices/me/attributes'
+ATTRIBUTE_REQUEST_TOPIC = 'v1/devices/me/attributes/request/'
+ATTRIBUTE_TOPIC_RESPONSE = 'v1/devices/me/attributes/response/'
+
+
 class TBDeviceMqttClient:
-    def __init__(self, host, port=1883, access_token=None, quality_of_service=None, client_id=None):
+    def __init__(self, host, port=1883, access_token=None, quality_of_service=None, client_id=None, chunk_size=0):
         self._host = host
         self._port = port
         self.quality_of_service = quality_of_service if quality_of_service is not None else 1
-        self.rpc_request_topic = 'v1/devices/me/rpc/request/+'
-        self.attributes_topic = 'v1/devices/me/attributes'
-        self.attribute_request_topic = 'v1/devices/me/attributes/request'
-        self.callbacks = {}
+        self.current_firmware_info = {
+            "current_" + FW_TITLE_ATTR: "Initial",
+            "current_" + FW_VERSION_ATTR: "v0"
+        }
+        self._attr_request_dict = {}
+        self.__device_client_rpc_dict = {}
+        self.__device_sub_dict = {}
+        self.__device_on_server_side_rpc_response = None
+        self.__attr_request_number = 0
+        self.__device_client_rpc_number = 0
+        self.__device_max_sub_id = 0
+        self.__firmware_request_id = 0
+        self.__request_id = 0
+        self.__chunk_size = chunk_size
         self.connected = False
 
         if not access_token:
@@ -25,12 +56,13 @@ class TBDeviceMqttClient:
         self._client = MQTTClient(self._client_id, self._host, self._port, self._access_token, 'pswd', keepalive=120)
 
     def connect(self):
-        self._client.set_callback(self._callback)
-
         try:
             response = self._client.connect()
-            self._client.subscribe(self.rpc_request_topic)
-            self._client.subscribe(self.attribute_request_topic + '/+')
+            self._client.set_callback(self._callback)
+            self._client.subscribe(ATTRIBUTES_TOPIC, qos=self.quality_of_service)
+            self._client.subscribe(ATTRIBUTES_TOPIC + "/response/+", qos=self.quality_of_service)
+            self._client.subscribe(RPC_REQUEST_TOPIC + '+', qos=self.quality_of_service)
+            self._client.subscribe(RPC_RESPONSE_TOPIC + '+', qos=self.quality_of_service)
 
             self.connected = True
 
@@ -44,64 +76,208 @@ class TBDeviceMqttClient:
         self.connected = False
 
     def _callback(self, topic, msg):
-        if topic == self.rpc_request_topic:
-            self._handle_rpc_request(msg)
-        elif topic == self.attributes_topic:
-            self._handle_attributes(msg)
-        elif topic.startswith(self.attribute_request_topic):
-            self._handle_attribute_request(topic, msg)
+        topic = topic.decode('utf-8')
+        print('callback', topic, msg)
 
-    def _handle_rpc_request(self, msg):
-        try:
-            data = ujson.loads(msg)
-            request_id = data['id']
-            method = data['method']
-            params = data.get('params')
-            if method in self.callbacks:
-                result = self.callbacks[method](params)
+        update_response_pattern = "v2/fw/response/" + str(self.__firmware_request_id) + "/chunk/"
+
+        if topic.startswith(update_response_pattern):
+            firmware_data = ujson.loads(msg)
+
+            self.firmware_data = self.firmware_data + firmware_data
+            self.__current_chunk = self.__current_chunk + 1
+
+            print('Getting chunk with number: %s. Chunk size is : %r byte(s).' % (
+                self.__current_chunk, self.__chunk_size))
+
+            if len(self.firmware_data) == self.__target_firmware_length:
+                self.__process_firmware()
             else:
-                result = {'error': 'Unknown method: {}'.format(method)}
-            response = {
-                'id': request_id,
-                'data': result
-            }
-            self._client.publish('v1/devices/me/rpc/response/', ujson.dumps(response))
-        except Exception as e:
-            print('Error handling RPC request: {}'.format(e))
+                self.__get_firmware()
+        else:
+            self._on_decode_message(topic, msg)
+
+    def _on_decode_message(self, topic, msg):
+        if topic.startswith(RPC_REQUEST_TOPIC):
+            self._handle_rpc_request(topic, msg)
+        elif topic.startswith(RPC_RESPONSE_TOPIC):
+            self._handle_rpc_response(topic, msg)
+        elif topic == ATTRIBUTES_TOPIC:
+            self._handle_attributes(msg)
+        elif topic.startswith(ATTRIBUTE_TOPIC_RESPONSE):
+            self._handle_attribute_response(topic, msg)
+
+        if topic.startswith(ATTRIBUTES_TOPIC):
+            self.firmware_info = ujson.loads(msg)
+
+            if '/response/' in topic:
+                self._handle_firmware_info()
+
+            if (self.firmware_info.get(FW_VERSION_ATTR) is not None and self.firmware_info.get(
+                    FW_VERSION_ATTR) != self.current_firmware_info.get("current_" + FW_VERSION_ATTR)) or \
+                    (self.firmware_info.get(FW_TITLE_ATTR) is not None and self.firmware_info.get(
+                        FW_TITLE_ATTR) != self.current_firmware_info.get("current_" + FW_TITLE_ATTR)):
+                self._handle_firmware_update()
+
+    def _handle_firmware_info(self):
+        self.firmware_info = self.firmware_info.get("shared", {}) if isinstance(self.firmware_info,
+                                                                                dict) else {}
+
+    def _handle_firmware_update(self):
+        print('Firmware is not the same')
+        self.firmware_data = b''
+        self.__current_chunk = 0
+
+        self.current_firmware_info[FW_STATE_ATTR] = "DOWNLOADING"
+        self.send_telemetry(self.current_firmware_info)
+        time.sleep(1)
+
+        self.__firmware_request_id = self.__firmware_request_id + 1
+        self.__target_firmware_length = self.firmware_info[FW_SIZE_ATTR]
+        self.__chunk_count = 0 if not self.__chunk_size else ceil(
+            self.firmware_info[FW_SIZE_ATTR] / self.__chunk_size)
+        self.__get_firmware()
+
+    def __get_firmware(self):
+        payload = '' if not self.__chunk_size or self.__chunk_size > self.firmware_info.get(FW_SIZE_ATTR, 0) else str(
+            self.__chunk_size).encode()
+        self._client.publish("v2/fw/request/{0}/chunk/{1}".format(self.__firmware_request_id, self.__current_chunk),
+                             payload, qos=1)
+
+    def __process_firmware(self):
+        self.current_firmware_info[FW_STATE_ATTR] = "DOWNLOADED"
+        self.send_telemetry(self.current_firmware_info)
+        time.sleep(1)
+
+        verification_result = verify_checksum(self.firmware_data, self.firmware_info.get(FW_CHECKSUM_ALG_ATTR),
+                                              self.firmware_info.get(FW_CHECKSUM_ATTR))
+
+        if verification_result:
+            print('Checksum verified!')
+            self.current_firmware_info[FW_STATE_ATTR] = "VERIFIED"
+            self.send_telemetry(self.current_firmware_info)
+            time.sleep(1)
+        else:
+            print('Checksum verification failed!')
+            self.current_firmware_info[FW_STATE_ATTR] = "FAILED"
+            self.send_telemetry(self.current_firmware_info)
+            self.__request_firmware_info()
+            return
+        self.firmware_received = True
+
+    def __request_firmware_info(self):
+        self.__request_id = self.__request_id + 1
+        self._client.publish("v1/devices/me/attributes/request/{0}".format(self.__request_id),
+                             ujson.dumps({"sharedKeys": REQUIRED_SHARED_KEYS}))
+
+    def _handle_rpc_request(self, topic, msg):
+        request_id = topic[len(RPC_REQUEST_TOPIC):len(topic)]
+        if self.__device_on_server_side_rpc_response:
+            self.__device_on_server_side_rpc_response(request_id, ujson.loads(msg))
+
+    def _handle_rpc_response(self, topic, msg):
+        request_id = int(topic[len(RPC_RESPONSE_TOPIC):len(topic)])
+        callback = self.__device_client_rpc_dict.pop(request_id)
+        callback(request_id, ujson.loads(msg), None)
+
+    def set_server_side_rpc_request_handler(self, handler):
+        self.__device_on_server_side_rpc_response = handler
 
     def _handle_attributes(self, msg):
-        try:
-            data = ujson.loads(msg)
-            for key in data:
-                if key in self.callbacks:
-                    self.callbacks[key](data[key])
-        except Exception as e:
-            print('Error handling attributes message: {}'.format(e))
+        msg = ujson.loads(msg)
+        dict_results = []
+        # callbacks for everything
+        if self.__device_sub_dict.get("*"):
+            for subscription_id in self.__device_sub_dict["*"]:
+                dict_results.append(self.__device_sub_dict["*"][subscription_id])
+        # specific callback
+        keys = msg.keys()
+        keys_list = []
+        for key in keys:
+            keys_list.append(key)
+        # iterate through message
+        for key in keys_list:
+            # find key in our dict
+            if self.__device_sub_dict.get(key):
+                for subscription in self.__device_sub_dict[key]:
+                    dict_results.append(self.__device_sub_dict[key][subscription])
+        for res in dict_results:
+            res(msg, None)
 
-    def _handle_attribute_request(self, topic, msg):
-        try:
-            data = ujson.loads(msg)
-            request_id = data['id']
-            client_keys = data['clientKeys']
-            server_keys = self.callbacks['attribute_request'](client_keys)
-            response = {
-                'id': request_id,
-                'data': server_keys
-            }
-            self._client.publish(topic.replace('request', 'response'), ujson.dumps(response))
-        except Exception as e:
-            print('Error handling attribute request: {}'.format(e))
+    def _handle_attribute_response(self, topic, msg):
+        req_id = int(topic[len(ATTRIBUTES_TOPIC + "/response/"):])
+        callback = self._attr_request_dict.pop(req_id)
+        if isinstance(callback, tuple):
+            callback[0](ujson.loads(msg), None, callback[1])
+        else:
+            callback(ujson.loads(msg), None)
 
     def send_telemetry(self, data):
         telemetry_topic = 'v1/devices/me/telemetry'
         self._client.publish(telemetry_topic, ujson.dumps(data))
 
     def send_attributes(self, data):
-        self._client.publish(self.attributes_topic, ujson.dumps(data))
+        self._client.publish(ATTRIBUTES_TOPIC, ujson.dumps(data))
 
-    def request_attributes(self, client_keys, request_id):
-        request = {
-            'id': request_id,
-            'clientKeys': client_keys
-        }
-        self._client.publish(self.attribute_request_topic, ujson.dumps(request))
+    def request_attributes(self, client_keys=None, shared_keys=None, callback=None):
+        msg = {}
+        if client_keys:
+            tmp = ""
+            for key in client_keys:
+                tmp += key + ","
+            tmp = tmp[:len(tmp) - 1]
+            msg.update({"clientKeys": tmp})
+        if shared_keys:
+            tmp = ""
+            for key in shared_keys:
+                tmp += key + ","
+            tmp = tmp[:len(tmp) - 1]
+            msg.update({"sharedKeys": tmp})
+        self._add_attr_request_callback(callback)
+        self._client.publish(ATTRIBUTE_REQUEST_TOPIC + str(self.__attr_request_number),
+                             ujson.dumps(msg),
+                             qos=self.quality_of_service)
+        self._client.wait_msg()
+
+    def _add_attr_request_callback(self, callback):
+        self.__attr_request_number += 1
+        self._attr_request_dict.update({self.__attr_request_number: callback})
+        attr_request_number = self.__attr_request_number
+        return attr_request_number
+
+    def send_rpc_call(self, method, params, callback):
+        self.__device_client_rpc_number += 1
+        self.__device_client_rpc_dict.update({self.__device_client_rpc_number: callback})
+        rpc_request_id = self.__device_client_rpc_number
+        payload = {"method": method, "params": params}
+        self._client.publish(RPC_REQUEST_TOPIC + str(rpc_request_id),
+                             ujson.dumps(payload),
+                             qos=self.quality_of_service)
+        self._client.wait_msg()
+
+    def unsubscribe_from_attribute(self, subscription_id):
+        for attribute in self.__device_sub_dict:
+            if self.__device_sub_dict[attribute].get(subscription_id):
+                del self.__device_sub_dict[attribute][subscription_id]
+                print("Unsubscribed from {0}, subscription id {1}".format(attribute, subscription_id))
+        if subscription_id == '*':
+            self.__device_sub_dict = {}
+        self.__device_sub_dict = dict((k, v) for k, v in self.__device_sub_dict.items() if v)
+
+    def clean_device_sub_dict(self):
+        self.__device_sub_dict = {}
+
+    def subscribe_to_all_attributes(self, callback):
+        return self.subscribe_to_attribute("*", callback)
+
+    def subscribe_to_attribute(self, key, callback):
+        self.__device_max_sub_id += 1
+        if key not in self.__device_sub_dict:
+            self.__device_sub_dict.update({key: {self.__device_max_sub_id: callback}})
+        else:
+            self.__device_sub_dict[key].update({self.__device_max_sub_id: callback})
+        print("Subscribed to {0} with id {1}".format(key, self.__device_max_sub_id))
+        return self.__device_max_sub_id
+
+    def wait_for_msg(self):
+        self._client.wait_msg()
