@@ -27,12 +27,10 @@ def verify_checksum(firmware_data, checksum_alg, checksum):
     checksum_of_received_firmware = None
     print('Checksum algorithm is: %s' % checksum_alg)
     if checksum_alg.lower() == "sha256":
-        checksum_of_received_firmware = sha256(firmware_data).digest().hex()
+        checksum_of_received_firmware = "".join(["%.2x" % i for i in sha256(firmware_data).digest()])
     else:
         print('Client error. Unsupported checksum algorithm.')
+
     print(checksum_of_received_firmware)
-    random_value = getrandbits(5)
-    if random_value > 3:
-        print('Dummy fail! Do not panic, just restart and try again the chance of this fail is ~20%')
-        return False
+
     return checksum_of_received_firmware == checksum

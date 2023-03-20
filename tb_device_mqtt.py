@@ -97,7 +97,7 @@ class TBDeviceMqttClient:
         update_response_pattern = "v2/fw/response/" + str(self.__firmware_request_id) + "/chunk/"
 
         if topic.startswith(update_response_pattern):
-            firmware_data = ujson.loads(msg)
+            firmware_data = msg
 
             self.firmware_data = self.firmware_data + firmware_data
             self.__current_chunk = self.__current_chunk + 1
@@ -172,6 +172,15 @@ class TBDeviceMqttClient:
             self.current_firmware_info[FW_STATE_ATTR] = "VERIFIED"
             self.send_telemetry(self.current_firmware_info)
             time.sleep(1)
+
+            self.__on_firmware_received(self.firmware_info.get(FW_VERSION_ATTR))
+
+            self.current_firmware_info = {
+                "current_" + FW_TITLE_ATTR: self.firmware_info.get(FW_TITLE_ATTR),
+                "current_" + FW_VERSION_ATTR: self.firmware_info.get(FW_VERSION_ATTR),
+                FW_STATE_ATTR: "UPDATED"
+            }
+            self.send_telemetry(self.current_firmware_info)
         else:
             print('Checksum verification failed!')
             self.current_firmware_info[FW_STATE_ATTR] = "FAILED"
@@ -179,6 +188,12 @@ class TBDeviceMqttClient:
             self.__request_firmware_info()
             return
         self.firmware_received = True
+
+    def __on_firmware_received(self, version_to):
+        with open(self.firmware_info.get(FW_TITLE_ATTR), "wb") as firmware_file:
+            firmware_file.write(self.firmware_data)
+        print('Firmware is updated!\n Current firmware version is: {0}'.format(version_to))
+        machine.reset()
 
     def __request_firmware_info(self):
         self.__request_id = self.__request_id + 1
