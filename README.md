@@ -3,11 +3,11 @@
 
 <a href="https://thingsboard.io"><img src="./logo.png?raw=true" width="100" height="100"></a>
 
-**💡 Make the notion that it is the early alpha of MQTT client uPython SDK special for controllers. So we appreciate any 
+**💡 Make the notion that it is the early alpha of MQTT client MicroPython SDK special for controllers. So we appreciate any 
 help in improving this project and getting it growing.**
 
 ThingsBoard is an open-source IoT platform for data collection, processing, visualization, and device management.
-This project is a uPython library that provides convenient client SDK for Device API using MicroPython.
+This project is a MicroPython library that provides convenient client SDK for Device API using MicroPython.
 
 SDK supports:
 - Provided all supported feature of umqtt library
