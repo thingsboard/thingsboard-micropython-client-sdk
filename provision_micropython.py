@@ -5,17 +5,15 @@ import ujson
 from umqtt import MQTTClient
 
 
-WIFI_SSID = 'ThingsBoard_TN'
-WIFI_PASS = '4Friends123!'
+WIFI_SSID = 'Your_wifi_ssid'
+WIFI_PASS = 'Your_wifi_password'
 
-# Конфигурация ThingsBoard
-THINGSBOARD_HOST = 'demo.thingsboard.io'
-ACCESS_KEY = 'qzdd2xhn8us63fdz0s67'
-ACCESS_SECRET = 'z320ow0r9kydv20o1bor'
-DEVICE_NAME = 'ESP8266_D1evi2ce'
+THINGSBOARD_HOST = 'Your_host'
+ACCESS_KEY = 'Provision_device_key'
+ACCESS_SECRET = 'Provision_device_secret'
+DEVICE_NAME = 'Your_device_name'
 ACCESS_TOKEN = ''
 
-# Топики для ThingsBoard
 PROVISION_REQUEST_TOPIC = "/provision/request"
 PROVISION_RESPONSE_TOPIC = "/provision/response"
 
