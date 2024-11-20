@@ -311,3 +311,50 @@ class TBDeviceMqttClient:
 
     def wait_for_msg(self):
         self._client.wait_msg()
+class ProvisionClient:
+    PROVISION_REQUEST_TOPIC = "/provision/request"
+    PROVISION_RESPONSE_TOPIC = "/provision/response"
+
+    def __init__(self, host, port, provision_request):
+        self._host = host
+        self._port = port
+        self._client_id = "provision"
+        self._provision_request = provision_request
+        self._credentials = None
+        self._mqtt_client = None
+
+    def _on_message(self, topic, msg):
+        print(f"Topic: {topic}, Message: {msg}")
+        response = ujson.loads(msg)
+        if "status" in response and response["status"] == "SUCCESS":
+            self._credentials = response
+            print("Provisioning successful, credentials obtained")
+        else:
+            error_msg = response.get("errorMsg", "Unknown error")
+            print(f"Provisioning failed: {error_msg}")
+
+    def provision(self):
+        try:
+            print("Connecting to MQTT broker for provisioning...")
+            self._mqtt_client = MQTTClient(self._client_id, self._host, self._port)
+            self._mqtt_client.set_callback(self._on_message)
+            self._mqtt_client.connect()
+            self._mqtt_client.subscribe(self.PROVISION_RESPONSE_TOPIC)
+            print("Subscribed to provisioning response topic")
+
+            provision_request_payload = ujson.dumps(self._provision_request)
+            print(f"Sending provision request: {provision_request_payload}")
+            self._mqtt_client.publish(self.PROVISION_REQUEST_TOPIC, provision_request_payload)
+
+            while self._credentials is None:
+                self._mqtt_client.wait_msg()
+        except Exception as e:
+            print(f"Provisioning error: {e}")
+        finally:
+            if self._mqtt_client:
+                self._mqtt_client.disconnect()
+
+    def get_credentials(self):
+        return self._credentials
+
+
