@@ -315,46 +315,54 @@ class ProvisionClient:
     PROVISION_REQUEST_TOPIC = "/provision/request"
     PROVISION_RESPONSE_TOPIC = "/provision/response"
 
-    def __init__(self, host, port, provision_request):
+    def __init__(self, host, port, provision_request, client_id="provision"):
         self._host = host
         self._port = port
-        self._client_id = "provision"
+        self._client_id = client_id
         self._provision_request = provision_request
         self._credentials = None
-        self._mqtt_client = None
 
     def _on_message(self, topic, msg):
         print(f"Topic: {topic}, Message: {msg}")
         response = ujson.loads(msg)
-        if "status" in response and response["status"] == "SUCCESS":
+        if response.get("status") == "SUCCESS":
             self._credentials = response
-            print("Provisioning successful, credentials obtained")
+            print("Provisioning completed successfully, credentials obtained.")
         else:
             error_msg = response.get("errorMsg", "Unknown error")
-            print(f"Provisioning failed: {error_msg}")
+            print(f"Provisioning error: {error_msg}")
 
-    def provision(self):
+    def provision(self, timeout=5):
         try:
             print("Connecting to MQTT broker for provisioning...")
-            self._mqtt_client = MQTTClient(self._client_id, self._host, self._port)
-            self._mqtt_client.set_callback(self._on_message)
-            self._mqtt_client.connect()
-            self._mqtt_client.subscribe(self.PROVISION_RESPONSE_TOPIC)
-            print("Subscribed to provisioning response topic")
+            mqtt_client = MQTTClient(self._client_id, self._host, self._port)
+            mqtt_client.set_callback(self._on_message)
+            mqtt_client.connect()
+            print("Connection established.")
+
+            mqtt_client.subscribe(self.PROVISION_RESPONSE_TOPIC)
+            print(f"Subscribed to topic: {self.PROVISION_RESPONSE_TOPIC}")
 
             provision_request_payload = ujson.dumps(self._provision_request)
-            print(f"Sending provision request: {provision_request_payload}")
-            self._mqtt_client.publish(self.PROVISION_REQUEST_TOPIC, provision_request_payload)
+            print(f"Sending provisioning request: {provision_request_payload}")
+            mqtt_client.publish(self.PROVISION_REQUEST_TOPIC, provision_request_payload)
 
+            start_time = time.time()
             while self._credentials is None:
-                self._mqtt_client.wait_msg()
+                elapsed_time = time.time() - start_time
+                if elapsed_time > timeout:
+                    raise TimeoutError(f"Provisioning response not received within {timeout} seconds.")
+                mqtt_client.wait_msg()
+        except TimeoutError as e:
+            print(f"Timeout error: {e}")
         except Exception as e:
             print(f"Provisioning error: {e}")
         finally:
-            if self._mqtt_client:
-                self._mqtt_client.disconnect()
+            mqtt_client.disconnect()
+            print("Disconnected from MQTT broker.")
 
-    def get_credentials(self):
+    @property
+    def credentials(self):
         return self._credentials
 
 
