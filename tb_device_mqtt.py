@@ -311,14 +311,16 @@ class TBDeviceMqttClient:
 
     def wait_for_msg(self):
         self._client.wait_msg()
+
+
 class ProvisionClient:
     PROVISION_REQUEST_TOPIC = "/provision/request"
     PROVISION_RESPONSE_TOPIC = "/provision/response"
 
-    def __init__(self, host, port, provision_request, client_id="provision"):
+    def __init__(self, host, port, provision_request):
         self._host = host
         self._port = port
-        self._client_id = client_id
+        self._client_id = "provision"
         self._provision_request = provision_request
         self._credentials = None
 
@@ -332,7 +334,7 @@ class ProvisionClient:
             error_msg = response.get("errorMsg", "Unknown error")
             print(f"Provisioning error: {error_msg}")
 
-    def provision(self, timeout=5):
+    def provision(self):
         try:
             print("Connecting to MQTT broker for provisioning...")
             mqtt_client = MQTTClient(self._client_id, self._host, self._port)
@@ -347,14 +349,10 @@ class ProvisionClient:
             print(f"Sending provisioning request: {provision_request_payload}")
             mqtt_client.publish(self.PROVISION_REQUEST_TOPIC, provision_request_payload)
 
-            start_time = time.time()
             while self._credentials is None:
-                elapsed_time = time.time() - start_time
-                if elapsed_time > timeout:
-                    raise TimeoutError(f"Provisioning response not received within {timeout} seconds.")
                 mqtt_client.wait_msg()
-        except TimeoutError as e:
-            print(f"Timeout error: {e}")
+        except OSError as e:
+            print(f"Socket error or timeout: {e}")
         except Exception as e:
             print(f"Provisioning error: {e}")
         finally:
