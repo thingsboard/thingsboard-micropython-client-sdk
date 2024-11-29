@@ -312,12 +312,14 @@ class TBDeviceMqttClient:
     def wait_for_msg(self):
         self._client.wait_msg()
 
-    def provision_device(self, provision_request):
+    @staticmethod
+    def provision_device(host, port, provision_request):
+        print(f"Host: {host}, Port: {port}, Provision Request: {provision_request}")
         try:
             print("Starting provisioning process...")
-            from ProvisionClient import ProvisionClient
+            from provision_client import ProvisionClient
 
-            provision_client = ProvisionClient(self._host, self._port, provision_request)
+            provision_client = ProvisionClient(host, port, provision_request)
             provision_client.provision()
 
             if provision_client.credentials:

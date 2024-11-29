@@ -6,6 +6,7 @@ class ProvisionClient:
     PROVISION_RESPONSE_TOPIC = "/provision/response"
 
     def __init__(self, host, port, provision_request):
+        print(f"ProvisionClient initialized with host={host}, port={port}, provision_request={provision_request}")
         self._host = host
         self._port = port
         self._client_id = "provision"
@@ -13,17 +14,19 @@ class ProvisionClient:
         self._credentials = None
 
     def _on_message(self, topic, msg):
+        print(f"Message received on topic: {topic}, message: {msg}")
         response = ujson.loads(msg)
         if response.get("status") == "SUCCESS":
+            print("Provisioning successful!")
             self._credentials = response
         else:
             error_msg = response.get("errorMsg", "Unknown error")
-            print(f"Provisioning error: {error_msg}")
+            print(f"Provisioning error from server: {error_msg}")
 
     def provision(self):
         try:
             mqtt_client = MQTTClient(self._client_id, self._host, self._port)
-            mqtt_client.set_callback(self._on_message)
+            mqtt_client.set_callback(lambda topic, msg: self._on_message(topic, msg))
             mqtt_client.connect()
             mqtt_client.subscribe(self.PROVISION_RESPONSE_TOPIC)
             mqtt_client.publish(self.PROVISION_REQUEST_TOPIC, ujson.dumps(self._provision_request))
