@@ -382,4 +382,3 @@ class TBDeviceMqttClient:
         finally:
             gc.collect()
             print(f"Free memory after provisioning: {gc.mem_free()} bytes")
-
