@@ -2,9 +2,8 @@ import gc
 import ujson
 from provision_client import ProvisionClient
 
+
 class ProvisionManager:
-
-
     def __init__(self, host, port=1883):
         self.host = host
         self.port = port
