@@ -311,3 +311,4 @@ class TBDeviceMqttClient:
 
     def wait_for_msg(self):
         self._client.wait_msg()
+
