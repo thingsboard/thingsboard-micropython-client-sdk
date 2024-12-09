@@ -124,7 +124,39 @@ client.connect()
 while True:
     time.sleep(1)
 ```
+## how to use the provisioning device
+First, you need to set up and configure the `ProvisionManager`, which allows you to provision a device on the ThingsBoard server via MQTT. Below are the steps for using this class.
+### Initialization
+To begin using `ProvisionManager`, create an instance of it, specifying the address of your ThingsBoard server and the port (default is 1883).
+```python
+from provision_manager import ProvisionManager
 
+# Provisioning data
+host = "thingsboard_url" 
+port = 1883 
+provision_device_key = "provision_device_key"
+provision_device_secret = "provision_device_secret"
+device_name = "MyDevice"
+
+# Create a ProvisionManager object
+provision_manager = ProvisionManager(host, port)
+
+# Execute device provisioning
+credentials = provision_manager.provision_device(
+    provision_device_key=provision_device_key,
+    provision_device_secret=provision_device_secret,
+    device_name=device_name
+)
+
+if credentials:
+    print(f"Records received {credentials}")
+else:
+    print("The device's provisioning failed!")
+```
+### Your ThingsBoard server address
+`host = "thingsboard_url" `
+### Initialize ProvisionManager
+`manager = ProvisionManager(host, port)`
 ## Other Examples
 
 There are more examples for both [device](https://github.com/thingsboard/thingsboard-python-client-sdk/tree/master/examples/device) and [gateway](https://github.com/thingsboard/thingsboard-python-client-sdk/tree/master/examples/gateway) in corresponding [folders](https://github.com/thingsboard/thingsboard-python-client-sdk/tree/master/examples).
