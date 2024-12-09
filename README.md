@@ -124,38 +124,51 @@ client.connect()
 while True:
     time.sleep(1)
 ```
-## how to use the provisioning device
+## Device provisioning
+**ProvisionManager** - class created to have ability to provision device to ThingsBoard, using device provisioning feature [Provisioning devices](https://thingsboard.io/docs/paas/user-guide/device-provisioning/)   
 First, you need to set up and configure the `ProvisionManager`, which allows you to provision a device on the ThingsBoard server via MQTT. Below are the steps for using this class.
-### Initialization
-To begin using `ProvisionManager`, create an instance of it, specifying the address of your ThingsBoard server and the port (default is 1883).
-```python
-from provision_manager import ProvisionManager
 
-# Provisioning data
-host = "thingsboard_url" 
-port = 1883 
-provision_device_key = "provision_device_key"
-provision_device_secret = "provision_device_secret"
+```python
+import ujson
+from provision_manager import ProvisionManager
+from umqtt import MQTTClient
+import time
+
+host = "THINGSBOARD_HOST"
+port = 1883
+provision_device_key = "YOUR_PROVISION_DEVICE_KEY"
+provision_device_secret = "YOUR_PROVISION_DEVICE_SECRET"
 device_name = "MyDevice"
 
-# Create a ProvisionManager object
 provision_manager = ProvisionManager(host, port)
-
-# Execute device provisioning
 credentials = provision_manager.provision_device(
     provision_device_key=provision_device_key,
     provision_device_secret=provision_device_secret,
     device_name=device_name
 )
 
-if credentials:
-    print(f"Records received {credentials}")
-else:
-    print("The device's provisioning failed!")
+if not credentials:
+    raise SystemExit("Provisioning failed!")
+
+access_token = credentials.get("credentialsValue")
+if not access_token:
+    raise SystemExit("Access token missing.")
+
+client_id = f"{device_name}_client"
+mqtt_client = MQTTClient(client_id, host, port, user=access_token, password="")
+
+try:
+    mqtt_client.connect()
+    telemetry_topic = "v1/devices/me/telemetry"
+    telemetry_data = {"temperature": 22.5, "humidity": 60}
+    mqtt_client.publish(telemetry_topic, ujson.dumps(telemetry_data))
+    time.sleep(1)
+finally:
+    mqtt_client.disconnect()
 ```
-### Your ThingsBoard server address
+#### Your ThingsBoard server address
 `host = "thingsboard_url" `
-### Initialize ProvisionManager
+#### Initialize ProvisionManager
 `manager = ProvisionManager(host, port)`
 ## Other Examples
 
