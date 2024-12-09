@@ -134,12 +134,14 @@ from provision_manager import ProvisionManager
 from umqtt import MQTTClient
 import time
 
+# Your ThingsBoard server address
 host = "THINGSBOARD_HOST"
 port = 1883
 provision_device_key = "YOUR_PROVISION_DEVICE_KEY"
 provision_device_secret = "YOUR_PROVISION_DEVICE_SECRET"
 device_name = "MyDevice"
 
+# Initialize ProvisionManager
 provision_manager = ProvisionManager(host, port)
 credentials = provision_manager.provision_device(
     provision_device_key=provision_device_key,
@@ -166,10 +168,6 @@ try:
 finally:
     mqtt_client.disconnect()
 ```
-#### Your ThingsBoard server address
-`host = "thingsboard_url" `
-#### Initialize ProvisionManager
-`manager = ProvisionManager(host, port)`
 ## Other Examples
 
 There are more examples for both [device](https://github.com/thingsboard/thingsboard-python-client-sdk/tree/master/examples/device) and [gateway](https://github.com/thingsboard/thingsboard-python-client-sdk/tree/master/examples/gateway) in corresponding [folders](https://github.com/thingsboard/thingsboard-python-client-sdk/tree/master/examples).
