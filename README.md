@@ -129,44 +129,54 @@ while True:
 First, you need to set up and configure the `ProvisionManager`, which allows you to provision a device on the ThingsBoard server via MQTT. Below are the steps for using this class.
 
 ```python
-import ujson
-from provision_manager import ProvisionManager
-from umqtt import MQTTClient
 import time
+from tb_device_mqtt import TBDeviceMqttClient
+from provision_manager import ProvisionManager
 
-# Your ThingsBoard server address
-host = "THINGSBOARD_HOST"
-port = 1883
-provision_device_key = "YOUR_PROVISION_DEVICE_KEY"
-provision_device_secret = "YOUR_PROVISION_DEVICE_SECRET"
-device_name = "MyDevice"
+HOST = "THINGSBOARD_HOST"
+PORT = THINGSBOARD_PORT
+PROVISION_DEVICE_KEY = "YOUR_PROVISION_DEVICE_KEY"
+PROVISION_DEVICE_SECRET = "YOUR_PROVISION_DEVICE_SECRET"
+DEVICE_NAME = "MyDevice"
 
-# Initialize ProvisionManager
-provision_manager = ProvisionManager(host, port)
-credentials = provision_manager.provision_device(
-    provision_device_key=provision_device_key,
-    provision_device_secret=provision_device_secret,
-    device_name=device_name
+provision_manager = ProvisionManager(HOST, PORT)
+
+CREDENTIALS = provision_manager.provision_device(
+    provision_device_key=PROVISION_DEVICE_KEY,
+    provision_device_secret=PROVISION_DEVICE_SECRET,
+    device_name=DEVICE_NAME
 )
 
-if not credentials:
-    raise SystemExit("Provisioning failed!")
+if not CREDENTIALS:
+    print("Provisioning failed!")
+    raise SystemExit("Exiting: Provisioning unsuccessful.")
 
-access_token = credentials.get("credentialsValue")
-if not access_token:
-    raise SystemExit("Access token missing.")
+print(f"Provisioning successful! Credentials: {CREDENTIALS}")
 
-client_id = f"{device_name}_client"
-mqtt_client = MQTTClient(client_id, host, port, user=access_token, password="")
+ACCESS_TOKEN = CREDENTIALS.get("credentialsValue")
+if not ACCESS_TOKEN:
+    print("No access token found in credentials!")
+    raise SystemExit("Exiting: Access token missing.")
+
+CLIENT_ID = f"{DEVICE_NAME}_client"
+mqtt_client = TBDeviceMqttClient(host=HOST, port=PORT, access_token=ACCESS_TOKEN)
 
 try:
     mqtt_client.connect()
-    telemetry_topic = "v1/devices/me/telemetry"
-    telemetry_data = {"temperature": 22.5, "humidity": 60}
-    mqtt_client.publish(telemetry_topic, ujson.dumps(telemetry_data))
+    print(f"Connected to ThingsBoard server at {HOST}:{PORT}")
+
+    TELEMETRY_DATA = {
+        "temperature": 22.5,
+        "humidity": 60
+    }
+
+    mqtt_client.send_telemetry(TELEMETRY_DATA) 
+    print(f"Telemetry sent: {TELEMETRY_DATA}")
+
     time.sleep(1)
 finally:
     mqtt_client.disconnect()
+    print("Disconnected from ThingsBoard server.")
 ```
 ## Other Examples
 
