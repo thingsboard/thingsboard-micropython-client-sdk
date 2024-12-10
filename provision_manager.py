@@ -21,7 +21,7 @@ class ProvisionManager:
                          gateway=None):
 
         gc.collect()
-        print(f"Free memory before provisioning: {gc.mem_free()} bytes")
+        #print(f"Free memory before provisioning: {gc.mem_free()} bytes")
 
         try:
             provision_request = {
@@ -47,17 +47,17 @@ class ProvisionManager:
             if gateway:
                 provision_request["gateway"] = gateway
 
-            print(f"Memory before JSON serialization: {gc.mem_free()} bytes")
+            #print(f"Memory before JSON serialization: {gc.mem_free()} bytes")
             provision_request_str = ujson.dumps(provision_request)
-            print(f"Memory after JSON serialization: {gc.mem_free()} bytes")
+            #print(f"Memory after JSON serialization: {gc.mem_free()} bytes")
 
             provision_client = ProvisionClient(self.host, self.port, provision_request)
             gc.collect()
-            print(f"Memory after client initialization: {gc.mem_free()} bytes")
+            #print(f"Memory after client initialization: {gc.mem_free()} bytes")
 
             provision_client.provision()
             gc.collect()
-            print(f"Memory after provisioning call: {gc.mem_free()} bytes")
+            #print(f"Memory after provisioning call: {gc.mem_free()} bytes")
 
             if provision_client.credentials:
                 print("Provisioning successful. Credentials obtained.")
@@ -75,4 +75,4 @@ class ProvisionManager:
             return None
         finally:
             gc.collect()
-            print(f"Free memory after provisioning: {gc.mem_free()} bytes")
+            #print(f"Free memory after provisioning: {gc.mem_free()} bytes")
