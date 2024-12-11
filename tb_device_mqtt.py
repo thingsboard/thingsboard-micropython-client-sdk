@@ -15,13 +15,11 @@
 
 import time
 from math import ceil
-
 from sdk_utils import verify_checksum
 from umqtt import MQTTClient, MQTTException
 import ujson
 import ubinascii
 import machine
-
 
 FW_TITLE_ATTR = "fw_title"
 FW_VERSION_ATTR = "fw_version"
@@ -30,8 +28,9 @@ FW_CHECKSUM_ALG_ATTR = "fw_checksum_algorithm"
 FW_SIZE_ATTR = "fw_size"
 FW_STATE_ATTR = "fw_state"
 
-REQUIRED_SHARED_KEYS = "{0},{1},{2},{3},{4}".format(FW_CHECKSUM_ATTR, FW_CHECKSUM_ALG_ATTR, FW_SIZE_ATTR, FW_TITLE_ATTR,
-                                                    FW_VERSION_ATTR)
+REQUIRED_SHARED_KEYS = "{0},{1},{2},{3},{4}".format(
+    FW_CHECKSUM_ATTR, FW_CHECKSUM_ALG_ATTR, FW_SIZE_ATTR, FW_TITLE_ATTR, FW_VERSION_ATTR
+)
 
 RPC_REQUEST_TOPIC = 'v1/devices/me/rpc/request/'
 RPC_RESPONSE_TOPIC = 'v1/devices/me/rpc/response/'
@@ -41,7 +40,9 @@ ATTRIBUTE_TOPIC_RESPONSE = 'v1/devices/me/attributes/response/'
 
 
 class TBDeviceMqttClient:
-    def __init__(self, host, port=1883, access_token=None, quality_of_service=None, client_id=None, chunk_size=0):
+    def __init__(
+        self, host, port=1883, access_token=None, quality_of_service=None, client_id=None, chunk_size=0
+    ):
         self._host = host
         self._port = port
         self.quality_of_service = quality_of_service if quality_of_service is not None else 1
@@ -68,7 +69,9 @@ class TBDeviceMqttClient:
         if not client_id:
             client_id = ubinascii.hexlify(machine.unique_id())
         self._client_id = client_id
-        self._client = MQTTClient(self._client_id, self._host, self._port, self._access_token, 'pswd', keepalive=120)
+        self._client = MQTTClient(
+            self._client_id, self._host, self._port, self._access_token, 'pswd', keepalive=120
+        )
 
     def connect(self):
         try:
@@ -112,7 +115,8 @@ class TBDeviceMqttClient:
             self.__current_chunk = self.__current_chunk + 1
 
             print('Getting chunk with number: %s. Chunk size is : %r byte(s).' % (
-                self.__current_chunk, self.__chunk_size))
+                self.__current_chunk, self.__chunk_size
+            ))
 
             if len(self.firmware_data) == self.__target_firmware_length:
                 self.__process_firmware()
