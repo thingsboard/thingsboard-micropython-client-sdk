@@ -130,8 +130,7 @@ First, you need to set up and configure the `ProvisionManager`, which allows you
 
 ```python
 import time
-from tb_device_mqtt import TBDeviceMqttClient
-from provision_manager import ProvisionManager
+from tb_device_mqtt import TBDeviceMqttClient, ProvisionManager
 
 HOST = "THINGSBOARD_HOST"
 PORT = THINGSBOARD_PORT
@@ -146,7 +145,6 @@ CREDENTIALS = provision_manager.provision_device(
     provision_device_secret=PROVISION_DEVICE_SECRET,
     device_name=DEVICE_NAME
 )
-
 if not CREDENTIALS:
     print("Provisioning failed!")
     raise SystemExit("Exiting: Provisioning unsuccessful.")
@@ -170,7 +168,7 @@ try:
         "humidity": 60
     }
 
-    mqtt_client.send_telemetry(TELEMETRY_DATA) 
+    mqtt_client.send_telemetry(TELEMETRY_DATA)
     print(f"Telemetry sent: {TELEMETRY_DATA}")
 
     time.sleep(1)
