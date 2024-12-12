@@ -94,12 +94,10 @@ class TBDeviceMqttClient:
         except MQTTException as e:
             self.connected = False
             print(f"MQTT connection error: {e}")
-            return None
 
         except Exception as e:
             self.connected = False
             print(f"Unexpected connection error: {e}")
-            return None
 
     def disconnect(self):
         self._client.disconnect()
@@ -298,6 +296,7 @@ class TBDeviceMqttClient:
     def wait_for_msg(self):
         self._client.wait_msg()
 
+
 class ProvisionManager:
     def __init__(self, host, port=1883):
         self.host = host
@@ -352,13 +351,10 @@ class ProvisionManager:
                 return self.credentials
             else:
                 print("Provisioning failed. No credentials obtained.")
-                return None
 
         except MemoryError:
             print("MemoryError occurred during provisioning!")
-            return None
         except Exception as e:
             print(f"Unexpected error: {e}")
-            return None
         finally:
          gc.collect()
