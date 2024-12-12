@@ -27,6 +27,7 @@ class ProvisionClient:
     def provision(self):
         try:
             gc.collect()
+
             mqtt_client = MQTTClient(self._client_id, self._host, self._port, keepalive=10)
             mqtt_client.set_callback(self._on_message)
             mqtt_client.connect(clean_session=True)
@@ -34,10 +35,11 @@ class ProvisionClient:
             gc.collect()
 
             provision_request_str = ujson.dumps(self._provision_request, separators=(',', ':'))
-
             mqtt_client.publish(self.PROVISION_REQUEST_TOPIC, provision_request_str)
             del provision_request_str
             gc.collect()
+
+            mqtt_client.wait_msg()
 
         except MemoryError:
             print("Memory error during provisioning!")
