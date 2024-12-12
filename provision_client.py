@@ -1,7 +1,7 @@
 import ujson
 from umqtt import MQTTClient
-import time
 import gc
+
 
 class ProvisionClient:
     PROVISION_REQUEST_TOPIC = b"/provision/request"
@@ -27,8 +27,6 @@ class ProvisionClient:
     def provision(self):
         try:
             gc.collect()
-
-
             mqtt_client = MQTTClient(self._client_id, self._host, self._port, keepalive=10)
             mqtt_client.set_callback(self._on_message)
             mqtt_client.connect(clean_session=True)
@@ -40,12 +38,6 @@ class ProvisionClient:
             mqtt_client.publish(self.PROVISION_REQUEST_TOPIC, provision_request_str)
             del provision_request_str
             gc.collect()
-
-            for _ in range(5):
-                mqtt_client.wait_msg()
-                if self._credentials:
-                    break
-                time.sleep(0.1)
 
         except MemoryError:
             print("Memory error during provisioning!")
