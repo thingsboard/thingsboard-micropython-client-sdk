@@ -23,7 +23,6 @@ import machine
 import gc
 from provision_client import ProvisionClient
 
-
 FW_TITLE_ATTR = "fw_title"
 FW_VERSION_ATTR = "fw_version"
 FW_CHECKSUM_ATTR = "fw_checksum"
@@ -90,11 +89,9 @@ class TBDeviceMqttClient:
             print("Successfully connected to the MQTT broker.")
 
             return response
-
         except MQTTException as e:
             self.connected = False
             print(f"MQTT connection error: {e}")
-
         except Exception as e:
             self.connected = False
             print(f"Unexpected connection error: {e}")
@@ -216,7 +213,8 @@ class TBDeviceMqttClient:
                 FW_STATE_ATTR: "UPDATED"
             }
             self.send_telemetry(self.current_firmware_info)
-            print('Firmware is updated!\n Current firmware version is: {0}'.format(self.firmware_info.get(FW_VERSION_ATTR)))
+            print('Firmware is updated!\n Current firmware version is: {0}'.format(
+                self.firmware_info.get(FW_VERSION_ATTR)))
             self.firmware_received = True
             machine.reset()
         else:
@@ -357,4 +355,4 @@ class ProvisionManager:
         except Exception as e:
             print(f"Unexpected error: {e}")
         finally:
-         gc.collect()
+            gc.collect()
