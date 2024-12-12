@@ -70,10 +70,14 @@ class TBDeviceMqttClient:
 
         if not client_id:
             client_id = ubinascii.hexlify(machine.unique_id())
+
         self._client_id = client_id
-        self._client = MQTTClient(
-            self._client_id, self._host, self._port, self._access_token, 'pswd', keepalive=120
-        )
+        self._client = MQTTClient(self._client_id,
+                                  self._host,
+                                  self._port,
+                                  self._access_token,
+                                  'pswd',
+                                  keepalive=120)
 
     def connect(self):
         try:
@@ -311,8 +315,8 @@ class ProvisionManager:
                          password=None,
                          hash=None,
                          gateway=None):
-
         gc.collect()
+
         try:
             provision_request = {
                 "provisionDeviceKey": provision_device_key,
@@ -349,7 +353,6 @@ class ProvisionManager:
                 return self.credentials
             else:
                 print("Provisioning failed. No credentials obtained.")
-
         except MemoryError:
             print("MemoryError occurred during provisioning!")
         except Exception as e:
