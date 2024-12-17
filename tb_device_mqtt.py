@@ -76,9 +76,9 @@ class TBDeviceMqttClient:
             self._client_id, self._host, self._port, self._access_token, 'pswd', keepalive=120
         )
 
-    def connect(self):
+    def connect(self, timeout=5):
         try:
-            response = self._client.connect()
+            response = self._client.connect(timeout=timeout)
             self._client.set_callback(self._callback)
 
             self._client.subscribe(ATTRIBUTES_TOPIC, qos=self.quality_of_service)
@@ -87,7 +87,7 @@ class TBDeviceMqttClient:
             self._client.subscribe(RPC_RESPONSE_TOPIC + '+', qos=self.quality_of_service)
 
             self.connected = True
-
+            print("Connected successfully!")
             return response
 
         except MQTTException as e:
