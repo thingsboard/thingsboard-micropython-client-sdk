@@ -129,7 +129,7 @@ while True:
 First, you need to set up and configure the `ProvisionManager`, which allows you to provision a device on the ThingsBoard server via MQTT. Below are the steps for using this class.
 
 ```python
-import time
+from time import sleep
 from tb_device_mqtt import TBDeviceMqttClient, ProvisionManager
 
 HOST = "THINGSBOARD_HOST"
@@ -171,10 +171,15 @@ try:
     mqtt_client.send_telemetry(TELEMETRY_DATA)
     print(f"Telemetry sent: {TELEMETRY_DATA}")
 
-    time.sleep(1)
+    sleep(1)
+except Exception as e:
+    print(f"An error occurred: {e}")
 finally:
-    mqtt_client.disconnect()
-    print("Disconnected from ThingsBoard server.")
+    if mqtt_client.connect():
+        mqtt_client.disconnect()
+        print("Disconnected from ThingsBoard server.")
+    else:
+        print("Client was not connected; no need to disconnect.")
 ```
 ## Other Examples
 
