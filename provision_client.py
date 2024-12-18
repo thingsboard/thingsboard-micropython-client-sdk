@@ -25,6 +25,7 @@ class ProvisionClient:
             print("MemoryError during message processing!")
 
     def provision(self):
+        mqtt_client = None
         try:
             collect()
 
@@ -45,7 +46,8 @@ class ProvisionClient:
         except Exception as e:
             print(f"Provisioning error {e}")
         finally:
-            mqtt_client.disconnect()
+            if mqtt_client:
+                mqtt_client.disconnect()
             collect()
 
     @property
