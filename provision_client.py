@@ -16,7 +16,7 @@ class ProvisionClient:
 
     def _on_message(self, topic, msg):
         try:
-            response = loads(msg)  # Using `loads` function
+            response = loads(msg)
             if response.get("status") == "SUCCESS":
                 self._credentials = response
             else:
@@ -35,7 +35,7 @@ class ProvisionClient:
             mqtt_client.subscribe(self.PROVISION_RESPONSE_TOPIC)
             collect()
 
-            provision_request_str = dumps(self._provision_request, separators=(',', ':'))  # Using `dumps`
+            provision_request_str = dumps(self._provision_request, separators=(',', ':'))
             mqtt_client.publish(self.PROVISION_REQUEST_TOPIC, provision_request_str)
             del provision_request_str
             collect()
