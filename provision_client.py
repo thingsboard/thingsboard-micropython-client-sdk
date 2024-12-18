@@ -25,7 +25,6 @@ class ProvisionClient:
             print("MemoryError during message processing!")
 
     def provision(self):
-        global mqtt_client
         try:
             collect()
 
