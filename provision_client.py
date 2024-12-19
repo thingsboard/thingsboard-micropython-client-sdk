@@ -41,8 +41,6 @@ class ProvisionClient:
             collect()
 
             mqtt_client.wait_msg()
-        except MemoryError:
-            print("Memory error during provisioning!")
         except Exception as e:
             print(f"Provisioning error {e}")
         finally:
