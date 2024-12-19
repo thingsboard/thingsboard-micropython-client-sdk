@@ -143,7 +143,6 @@ credentials = provision_manager.provision_device(
     provision_device_key=PROVISION_DEVICE_KEY,
     provision_device_secret=PROVISION_DEVICE_SECRET,
     device_name=DEVICE_NAME
-
 )
 if not credentials:
     print("Provisioning failed!")
