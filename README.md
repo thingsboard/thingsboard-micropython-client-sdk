@@ -129,39 +129,39 @@ while True:
 First, you need to set up and configure the `ProvisionManager`, which allows you to provision a device on the ThingsBoard server via MQTT. Below are the steps for using this class.
 
 ```python
-from time import sleep
 from tb_device_mqtt import TBDeviceMqttClient, ProvisionManager
 
-HOST = "THINGSBOARD_HOST"
-PORT = THINGSBOARD_PORT
-PROVISION_DEVICE_KEY = "YOUR_PROVISION_DEVICE_KEY"
-PROVISION_DEVICE_SECRET = "YOUR_PROVISION_DEVICE_SECRET"
-DEVICE_NAME = "MyDevice"
+HOST = "demo.thingsboard.io"
+PROVISION_DEVICE_KEY = "qzdd2xhn8us63fdz0s67"
+PROVISION_DEVICE_SECRET = "z320ow0r9kydv20o1bor"
+DEVICE_NAME = "qwert1y1111111111"
+port = 1883
 
-provision_manager = ProvisionManager(HOST, PORT)
+provision_manager = ProvisionManager(HOST, port)
 
-CREDENTIALS = provision_manager.provision_device(
+credentials = provision_manager.provision_device(
     provision_device_key=PROVISION_DEVICE_KEY,
     provision_device_secret=PROVISION_DEVICE_SECRET,
     device_name=DEVICE_NAME
+
 )
-if not CREDENTIALS:
+if not credentials:
     print("Provisioning failed!")
     raise SystemExit("Exiting: Provisioning unsuccessful.")
 
-print(f"Provisioning successful! Credentials: {CREDENTIALS}")
+print(f"Provisioning successful! Credentials: {credentials}")
 
-ACCESS_TOKEN = CREDENTIALS.get("credentialsValue")
+ACCESS_TOKEN = credentials.get("credentialsValue")
 if not ACCESS_TOKEN:
     print("No access token found in credentials!")
     raise SystemExit("Exiting: Access token missing.")
 
 CLIENT_ID = f"{DEVICE_NAME}_client"
-mqtt_client = TBDeviceMqttClient(host=HOST, port=PORT, access_token=ACCESS_TOKEN)
+mqtt_client = TBDeviceMqttClient(host=HOST, port=port, access_token=ACCESS_TOKEN)
 
 try:
     mqtt_client.connect()
-    print(f"Connected to ThingsBoard server at {HOST}:{PORT}")
+    print(f"Connected to ThingsBoard server at {HOST}:{port}")
 
     TELEMETRY_DATA = {
         "temperature": 22.5,
@@ -171,7 +171,6 @@ try:
     mqtt_client.send_telemetry(TELEMETRY_DATA)
     print(f"Telemetry sent: {TELEMETRY_DATA}")
 
-    sleep(1)
 except Exception as e:
     print(f"An error occurred: {e}")
 finally:
