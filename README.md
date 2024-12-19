@@ -131,10 +131,10 @@ First, you need to set up and configure the `ProvisionManager`, which allows you
 ```python
 from tb_device_mqtt import TBDeviceMqttClient, ProvisionManager
 
-HOST = "demo.thingsboard.io"
-PROVISION_DEVICE_KEY = "qzdd2xhn8us63fdz0s67"
-PROVISION_DEVICE_SECRET = "z320ow0r9kydv20o1bor"
-DEVICE_NAME = "qwert1y1111111111"
+HOST = "THINGSBOARD_HOST"
+PROVISION_DEVICE_KEY = "YOUR_PROVISION_DEVICE_KEY"
+PROVISION_DEVICE_SECRET = "YOUR_PROVISION_DEVICE_SECRET"
+DEVICE_NAME = "MyDevice"
 port = 1883
 
 provision_manager = ProvisionManager(HOST, port)
