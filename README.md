@@ -151,13 +151,13 @@ if not credentials:
 
 print(f"Provisioning successful! Credentials: {credentials}")
 
-ACCESS_TOKEN = credentials.get("credentialsValue")
-if not ACCESS_TOKEN:
+access_token = credentials.get("credentialsValue")
+if not access_token:
     print("No access token found in credentials!")
     raise SystemExit("Exiting: Access token missing.")
 
-CLIENT_ID = f"{DEVICE_NAME}_client"
-mqtt_client = TBDeviceMqttClient(host=THINGSBOARD_HOST, port=THINGSBOARD_PORT, access_token=ACCESS_TOKEN)
+client_id = f"{DEVICE_NAME}_client"
+mqtt_client = TBDeviceMqttClient(host=THINGSBOARD_HOST, port=THINGSBOARD_PORT, access_token=access_token)
 
 try:
     mqtt_client.connect()
