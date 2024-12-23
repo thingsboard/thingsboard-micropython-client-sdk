@@ -41,8 +41,6 @@ class ProvisionClient:
             collect()
 
             mqtt_client.wait_msg()
-        except Exception as e:
-            print(f"Provisioning error {e}")
         finally:
             if mqtt_client:
                 mqtt_client.disconnect()
