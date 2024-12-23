@@ -93,7 +93,6 @@ class TBDeviceMqttClient:
         except MQTTException as e:
             self.connected = False
             print(f"MQTT connection error: {e}")
-
         except Exception as e:
             self.connected = False
             print(f"Unexpected connection error: {e}")
