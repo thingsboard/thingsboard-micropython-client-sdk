@@ -87,7 +87,6 @@ class TBDeviceMqttClient:
             self._client.subscribe(RPC_RESPONSE_TOPIC + '+', qos=self.quality_of_service)
 
             self.connected = True
-            print("Connected successfully!")
             return response
 
         except MQTTException as e:
