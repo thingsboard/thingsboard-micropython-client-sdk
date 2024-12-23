@@ -337,7 +337,6 @@ class ProvisionManager:
             if gateway:
                 provision_request["gateway"] = gateway
 
-
             provision_client = ProvisionClient(self.host, self.port, provision_request)
 
             provision_client.provision()
@@ -348,8 +347,5 @@ class ProvisionManager:
                 return self.credentials
             else:
                 print("Provisioning failed. No credentials obtained.")
-
-        except Exception as e:
-            print(f"Unexpected error: {e}")
         finally:
             collect()
