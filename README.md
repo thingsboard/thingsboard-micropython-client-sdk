@@ -180,6 +180,42 @@ finally:
     else:
         print("Client was not connected; no need to disconnect.")
 ```
+
+# Claim device
+The **claim_device** function allows you to send a device claiming request to the ThingsBoard MQTT broker. This feature is particularly useful for assigning devices to specific customers or users dynamically.
+
+### How to use
+To use the claiming feature, you need to:
+1. Import the `claim_device` function from the `claim_utils.py` file.
+2. Use it with an instance of the `TBDeviceMqttClient` client.
+3. Provide the `secret_key` and optionally `duration_ms` for the claiming request.
+
+```python
+from tb_device_mqtt import TBDeviceMqttClient
+from claim_utils import claim_device
+
+THINGSBOARD_HOST = "YOUR_THINGSBOARD_HOST"
+THINGSBOARD_PORT = 1883
+DEVICE_TOKEN = "YOUR_DEVICE_TOKEN"
+secret_key = "YOUR_SECRET_KEY"
+duration_ms = 30000
+
+client = TBDeviceMqttClient(THINGSBOARD_HOST, THINGSBOARD_PORT, DEVICE_TOKEN)
+
+try:
+    client.connect()
+    print("Connected to ThingsBoard!")
+
+    claim_device(client._client, secret_key=secret_key, duration_ms=duration_ms)
+    print("Claiming request sent.")
+
+    client.wait_for_msg()
+except Exception as e:
+    print(f"An error occurred: {e}")
+finally:
+    client.disconnect()
+    print("Disconnected from ThingsBoard.")
+```
 ## Other Examples
 
 There are more examples for both [device](https://github.com/thingsboard/thingsboard-python-client-sdk/tree/master/examples/device) and [gateway](https://github.com/thingsboard/thingsboard-python-client-sdk/tree/master/examples/gateway) in corresponding [folders](https://github.com/thingsboard/thingsboard-python-client-sdk/tree/master/examples).
