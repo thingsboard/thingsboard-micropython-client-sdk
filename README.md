@@ -182,7 +182,7 @@ finally:
 ```
 
 # Claim device
-The **claim_device** function allows you to send a device claiming request to the ThingsBoard MQTT broker. This feature is particularly useful for assigning devices to specific customers or users dynamically.
+The [**claim device**](https://thingsboard.io/docs/pe/user-guide/ui/customers/) function allows you to send a device claiming request to the ThingsBoard MQTT broker. This feature is particularly useful for assigning devices to specific customers or users dynamically.
 
 ### How to use
 To use the claiming feature, you need to:
