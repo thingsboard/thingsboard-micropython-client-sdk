@@ -193,12 +193,13 @@ To use the claiming feature, you need to:
 ```python
 from tb_device_mqtt import TBDeviceMqttClient
 from claim_utils import claim_device
+import sys
 
-THINGSBOARD_HOST = "YOUR_THINGSBOARD_HOST"
+THINGSBOARD_HOST = "thingsboard.cloud"
 THINGSBOARD_PORT = 1883
-DEVICE_TOKEN = "YOUR_DEVICE_TOKEN"
-secret_key = "YOUR_SECRET_KEY"
-duration_ms = 30000
+DEVICE_TOKEN = "wlCADJVQpdYQpk75g0Pg"
+secret_key = "qwe234qwe123"
+duration_ms = 60000
 
 client = TBDeviceMqttClient(THINGSBOARD_HOST, THINGSBOARD_PORT, DEVICE_TOKEN)
 
@@ -208,13 +209,14 @@ try:
 
     claim_device(client._client, secret_key=secret_key, duration_ms=duration_ms)
     print("Claiming request sent.")
+    sys.exit(0)
 
-    client.wait_for_msg()
 except Exception as e:
     print(f"An error occurred: {e}")
 finally:
-    client.disconnect()
-    print("Disconnected from ThingsBoard.")
+    if client.connected:
+        client.disconnect()
+        print("Disconnected from ThingsBoard.")
 ```
 ## Other Examples
 
