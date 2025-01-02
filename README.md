@@ -195,11 +195,11 @@ from tb_device_mqtt import TBDeviceMqttClient
 from claim_utils import claim_device
 import sys
 
-THINGSBOARD_HOST = "thingsboard.cloud"
+THINGSBOARD_HOST = "YOUR_THINGSBOARD_HOST"
 THINGSBOARD_PORT = 1883
-DEVICE_TOKEN = "wlCADJVQpdYQpk75g0Pg"
-secret_key = "qwe234qwe123"
-duration_ms = 60000
+DEVICE_TOKEN = "YOUR_DEVICE_TOKEN"
+secret_key = "YOUR_SECRET_KEY"
+duration_ms = 30000
 
 client = TBDeviceMqttClient(THINGSBOARD_HOST, THINGSBOARD_PORT, DEVICE_TOKEN)
 
