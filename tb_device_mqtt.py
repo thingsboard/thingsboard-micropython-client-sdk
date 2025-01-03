@@ -293,6 +293,23 @@ class TBDeviceMqttClient:
     def wait_for_msg(self):
         self._client.wait_msg()
 
+    def claim_device(self, secret_key=None, duration_ms=None):
+        claim_request = {}
+        if secret_key:
+            claim_request["secretKey"] = secret_key
+        if duration_ms:
+            claim_request["durationMs"] = duration_ms
+
+        try:
+            payload = dumps(claim_request)
+            topic = "v1/devices/me/claim"
+            print(f"Sending claim request to topic '{topic}' with payload: {payload}")
+            self._client.publish(topic, payload, qos=self.quality_of_service)
+        except Exception as e:
+            print(f"Error sending claim request: {e}")
+            raise
+
+
 class ProvisionManager:
     def __init__(self, host, port=1883):
         self.host = host
