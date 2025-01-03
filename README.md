@@ -182,18 +182,11 @@ finally:
 ```
 
 # Claim device
-The [**claim device**](https://thingsboard.io/docs/pe/user-guide/claiming-devices/) function allows you to send a device claiming request to the ThingsBoard MQTT broker. This feature is particularly useful for assigning devices to specific customers or users dynamically.
-
-### How to use
-To use the claiming feature, you need to:
-1. Import the `claim_device` function from the `claim_utils.py` file.
-2. Use it with an instance of the `TBDeviceMqttClient` client.
-3. Provide the `secret_key` and optionally `duration_ms` for the claiming request.
+[**Claim device**](https://thingsboard.io/docs/pe/user-guide/claiming-devices/) is a function designed to handle the device claiming feature in ThingsBoard. It enables sending device claiming requests to the ThingsBoard MQTT broker, allowing dynamic assignment of devices to users or customers.
 
 ```python
 from tb_device_mqtt import TBDeviceMqttClient
-from claim_utils import claim_device
-import sys
+from json import dumps
 
 THINGSBOARD_HOST = "YOUR_THINGSBOARD_HOST"
 THINGSBOARD_PORT = 1883
@@ -207,9 +200,15 @@ try:
     client.connect()
     print("Connected to ThingsBoard!")
 
-    claim_device(client._client, secret_key=secret_key, duration_ms=duration_ms)
-    print("Claiming request sent.")
-    sys.exit(0)
+    claim_payload = {
+        "secretKey": secret_key,
+        "durationMs": duration_ms
+    }
+    claim_topic = "v1/devices/me/claim"
+    claim_message = dumps(claim_payload)
+
+    client._client.publish(claim_topic, claim_message)
+    print(f"Sending claim request to topic '{claim_topic}' with payload {claim_message}")
 
 except Exception as e:
     print(f"An error occurred: {e}")
