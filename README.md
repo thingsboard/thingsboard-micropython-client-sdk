@@ -186,7 +186,6 @@ finally:
 
 ```python
 from tb_device_mqtt import TBDeviceMqttClient
-from json import dumps
 
 THINGSBOARD_HOST = "YOUR_THINGSBOARD_HOST"
 THINGSBOARD_PORT = 1883
