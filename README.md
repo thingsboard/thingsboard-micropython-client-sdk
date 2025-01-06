@@ -200,15 +200,8 @@ try:
     client.connect()
     print("Connected to ThingsBoard!")
 
-    claim_payload = {
-        "secretKey": secret_key,
-        "durationMs": duration_ms
-    }
-    claim_topic = "v1/devices/me/claim"
-    claim_message = dumps(claim_payload)
-
-    client._client.publish(claim_topic, claim_message)
-    print(f"Sending claim request to topic '{claim_topic}' with payload {claim_message}")
+    client.claim_device(secret_key, duration_ms)
+    print(f"Claim request sent with secretKey: {secret_key} and durationMs: {duration_ms}")
 
 except Exception as e:
     print(f"An error occurred: {e}")
