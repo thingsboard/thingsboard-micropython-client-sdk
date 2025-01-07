@@ -197,7 +197,6 @@ client = TBDeviceMqttClient(THINGSBOARD_HOST, THINGSBOARD_PORT, DEVICE_TOKEN)
 
 try:
     client.connect()
-    print("Connected to ThingsBoard!")
 
     client.claim_device(secret_key, duration_ms)
     print(f"Claim request sent with secretKey: {secret_key} and durationMs: {duration_ms}")
