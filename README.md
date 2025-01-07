@@ -187,11 +187,11 @@ finally:
 ```python
 from tb_device_mqtt import TBDeviceMqttClient
 
+duration_ms = 30000
+secret_key = "YOUR_SECRET_KEY"
 THINGSBOARD_HOST = "YOUR_THINGSBOARD_HOST"
 THINGSBOARD_PORT = 1883
 DEVICE_TOKEN = "YOUR_DEVICE_TOKEN"
-secret_key = "YOUR_SECRET_KEY"
-duration_ms = 30000
 
 client = TBDeviceMqttClient(THINGSBOARD_HOST, THINGSBOARD_PORT, DEVICE_TOKEN)
 
