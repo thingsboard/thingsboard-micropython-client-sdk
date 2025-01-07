@@ -200,7 +200,6 @@ try:
 
     client.claim_device(secret_key, duration_ms)
     print(f"Claim request sent with secretKey: {secret_key} and durationMs: {duration_ms}")
-
 except Exception as e:
     print(f"An error occurred: {e}")
 finally:
