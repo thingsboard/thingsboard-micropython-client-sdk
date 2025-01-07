@@ -41,6 +41,7 @@ ATTRIBUTE_REQUEST_TOPIC = 'v1/devices/me/attributes/request/'
 ATTRIBUTE_TOPIC_RESPONSE = 'v1/devices/me/attributes/response/'
 CLAIMING_TOPIC = "v1/devices/me/claim"
 
+
 class TBDeviceMqttClient:
     def __init__(
         self, host, port=1883, access_token=None, quality_of_service=None, client_id=None, chunk_size=0
