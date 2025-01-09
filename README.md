@@ -187,19 +187,19 @@ finally:
 ```python
 from tb_device_mqtt import TBDeviceMqttClient
 
-duration_ms = 30000
-secret_key = "YOUR_SECRET_KEY"
 THINGSBOARD_HOST = "YOUR_THINGSBOARD_HOST"
 THINGSBOARD_PORT = 1883
 DEVICE_TOKEN = "YOUR_DEVICE_TOKEN"
+DURATION_MS = 30000
+SECRET_KEY = "YOUR_SECRET_KEY"
 
 client = TBDeviceMqttClient(THINGSBOARD_HOST, THINGSBOARD_PORT, DEVICE_TOKEN)
 
 try:
     client.connect()
 
-    client.claim_device(secret_key, duration_ms)
-    print(f"Claim request sent with secretKey: {secret_key} and durationMs: {duration_ms}")
+    client.claim_device(SECRET_KEY, DURATION_MS)
+    print(f"Claim request sent with secretKey: {SECRET_KEY} and durationMs: {DURATION_MS}")
 except Exception as e:
     print(f"An error occurred: {e}")
 finally:
