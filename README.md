@@ -180,6 +180,33 @@ finally:
     else:
         print("Client was not connected; no need to disconnect.")
 ```
+
+# Claim device
+[**Claim device**](https://thingsboard.io/docs/pe/user-guide/claiming-devices/) is a function designed to handle the device claiming feature in ThingsBoard. It enables sending device claiming requests to the ThingsBoard MQTT broker, allowing dynamic assignment of devices to users or customers.
+
+```python
+from tb_device_mqtt import TBDeviceMqttClient
+
+THINGSBOARD_HOST = "YOUR_THINGSBOARD_HOST"
+THINGSBOARD_PORT = 1883
+DEVICE_TOKEN = "YOUR_DEVICE_TOKEN"
+DURATION_MS = 30000
+SECRET_KEY = "YOUR_SECRET_KEY"
+
+client = TBDeviceMqttClient(THINGSBOARD_HOST, THINGSBOARD_PORT, DEVICE_TOKEN)
+
+try:
+    client.connect()
+
+    client.claim_device(SECRET_KEY, DURATION_MS)
+    print(f"Claim request sent with secretKey: {SECRET_KEY} and durationMs: {DURATION_MS}")
+except Exception as e:
+    print(f"An error occurred: {e}")
+finally:
+    if client.connected:
+        client.disconnect()
+        print("Disconnected from ThingsBoard.")
+```
 ## Other Examples
 
 There are more examples for both [device](https://github.com/thingsboard/thingsboard-python-client-sdk/tree/master/examples/device) and [gateway](https://github.com/thingsboard/thingsboard-python-client-sdk/tree/master/examples/gateway) in corresponding [folders](https://github.com/thingsboard/thingsboard-python-client-sdk/tree/master/examples).

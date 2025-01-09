@@ -14,7 +14,6 @@
 #
 
 from time import sleep
-from math import ceil
 from sdk_utils import verify_checksum
 from umqtt import MQTTClient, MQTTException
 from ujson import dumps, loads
@@ -40,6 +39,7 @@ RPC_RESPONSE_TOPIC = 'v1/devices/me/rpc/response/'
 ATTRIBUTES_TOPIC = 'v1/devices/me/attributes'
 ATTRIBUTE_REQUEST_TOPIC = 'v1/devices/me/attributes/request/'
 ATTRIBUTE_TOPIC_RESPONSE = 'v1/devices/me/attributes/response/'
+CLAIMING_TOPIC = "v1/devices/me/claim"
 
 
 class TBDeviceMqttClient:
@@ -180,8 +180,9 @@ class TBDeviceMqttClient:
 
                 self.__firmware_request_id = self.__firmware_request_id + 1
                 self.__target_firmware_length = self.firmware_info[FW_SIZE_ATTR]
-                self.__chunk_count = 0 if not self.__chunk_size else ceil(
-                    self.firmware_info[FW_SIZE_ATTR] / self.__chunk_size)
+                firmware_tail = 0 if not self.__chunk_size else self.firmware_info[FW_SIZE_ATTR] % self.__chunk_size
+                self.__chunk_count = 0 if not self.__chunk_size else int(
+                    self.firmware_info[FW_SIZE_ATTR] / self.__chunk_size) + (0 if not firmware_tail else 1)
                 self.__get_firmware()
 
     def __get_firmware(self):
@@ -292,6 +293,18 @@ class TBDeviceMqttClient:
 
     def wait_for_msg(self):
         self._client.wait_msg()
+
+    def claim_device(self, secret_key=None, duration_ms=None):
+        claim_request = {}
+        if secret_key:
+            claim_request["secretKey"] = secret_key
+        if duration_ms:
+            claim_request["durationMs"] = duration_ms
+
+        payload = dumps(claim_request)
+        print(f"Sending claim request to topic '{CLAIMING_TOPIC}' with payload: {payload}")
+        self._client.publish(CLAIMING_TOPIC, payload, qos=self.quality_of_service)
+
 
 class ProvisionManager:
     def __init__(self, host, port=1883):
