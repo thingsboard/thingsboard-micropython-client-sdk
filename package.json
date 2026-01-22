@@ -1,10 +1,11 @@
 {
   "urls": [
-    ["manifest.py", "manifest.py"],
-    ["sdk_utils.py", "sdk_utils.py"],
-    ["umqtt.py", "umqtt.py"],
-    ["tb_device_mqtt.py", "tb_device_mqtt.py"],
-    ["provision_client.py", "provision_client.py"]
+    ["thingsboard_sdk/__init__.py", "thingsboard_sdk/__init__.py"],
+    ["thingsboard_sdk/manifest.py", "thingsboard_sdk/manifest.py"],
+    ["thingsboard_sdk/sdk_utils.py", "thingsboard_sdk/sdk_utils.py"],
+    ["thingsboard_sdk/umqtt.py", "thingsboard_sdk/umqtt.py"],
+    ["thingsboard_sdk/tb_device_mqtt.py", "thingsboard_sdk/tb_device_mqtt.py"],
+    ["thingsboard_sdk/provision_client.py", "thingsboard_sdk/provision_client.py"]
   ],
   "version": "0.1"
 }
