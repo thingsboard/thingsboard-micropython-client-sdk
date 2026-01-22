@@ -19,9 +19,9 @@ from ubinascii import hexlify
 from machine import unique_id, reset
 from gc import collect
 
-from thingsboard_sdk.sdk_utils import verify_checksum
-from thingsboard_sdk.umqtt import MQTTClient, MQTTException
-from thingsboard_sdk.provision_client import ProvisionClient
+from .sdk_utils import verify_checksum
+from .umqtt import MQTTClient, MQTTException
+from .provision_client import ProvisionClient
 
 
 FW_TITLE_ATTR = "fw_title"

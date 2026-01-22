@@ -16,7 +16,7 @@
 from ujson import dumps, loads
 from gc import collect
 
-from thingsboard_sdk.umqtt import MQTTClient
+from .umqtt import MQTTClient
 
 
 class ProvisionClient:
