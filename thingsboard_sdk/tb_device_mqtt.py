@@ -1,4 +1,4 @@
-#      Copyright 2023. ThingsBoard
+#      Copyright 2026. ThingsBoard
 #  #
 #      Licensed under the Apache License, Version 2.0 (the "License");
 #      you may not use this file except in compliance with the License.
@@ -14,13 +14,14 @@
 #
 
 from time import sleep
-from sdk_utils import verify_checksum
-from umqtt import MQTTClient, MQTTException
 from ujson import dumps, loads
 from ubinascii import hexlify
 from machine import unique_id, reset
 from gc import collect
-from provision_client import ProvisionClient
+
+from thingsboard_sdk.sdk_utils import verify_checksum
+from thingsboard_sdk.umqtt import MQTTClient, MQTTException
+from thingsboard_sdk.provision_client import ProvisionClient
 
 
 FW_TITLE_ATTR = "fw_title"
