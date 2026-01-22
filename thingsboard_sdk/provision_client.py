@@ -1,4 +1,4 @@
-#      Copyright 2025. ThingsBoard
+#      Copyright 2026. ThingsBoard
 #  #
 #      Licensed under the Apache License, Version 2.0 (the "License");
 #      you may not use this file except in compliance with the License.
@@ -14,8 +14,9 @@
 #
 
 from ujson import dumps, loads
-from umqtt import MQTTClient
 from gc import collect
+
+from .umqtt import MQTTClient
 
 
 class ProvisionClient:
