@@ -3,7 +3,8 @@
     ["manifest.py", "manifest.py"],
     ["sdk_utils.py", "sdk_utils.py"],
     ["umqtt.py", "umqtt.py"],
-    ["tb_device_mqtt.py", "tb_device_mqtt.py"]
+    ["tb_device_mqtt.py", "tb_device_mqtt.py"],
+    ["provision_client.py", "provision_client.py"]
   ],
   "version": "0.1"
 }
