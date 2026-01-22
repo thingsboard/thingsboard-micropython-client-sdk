@@ -1,4 +1,7 @@
 # ThingsBoard MQTT client MicroPython SDK
+
+[![Join our Discord](https://img.shields.io/badge/Discord-Join%20our%20server-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/mJxDjAM3PF)
+
 [![Join the chat at https://gitter.im/thingsboard/chat](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/thingsboard/chat?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 <a href="https://thingsboard.io"><img src="./logo.png?raw=true" width="100" height="100"></a>
@@ -124,13 +127,96 @@ client.connect()
 while True:
     time.sleep(1)
 ```
+## Device provisioning
+**ProvisionManager** - class created to have ability to provision device to ThingsBoard, using device provisioning feature [Provisioning devices](https://thingsboard.io/docs/paas/user-guide/device-provisioning/)   
+First, you need to set up and configure the `ProvisionManager`, which allows you to provision a device on the ThingsBoard server via MQTT. Below are the steps for using this class.
 
+```python
+from tb_device_mqtt import TBDeviceMqttClient, ProvisionManager
+
+THINGSBOARD_HOST = "YOUR_THINGSBOARD_HOST"
+THINGSBOARD_PORT = 1883
+PROVISION_DEVICE_KEY = "YOUR_PROVISION_DEVICE_KEY"
+PROVISION_DEVICE_SECRET = "YOUR_PROVISION_DEVICE_SECRET"
+DEVICE_NAME = "MyDevice"
+
+provision_manager = ProvisionManager(THINGSBOARD_HOST, THINGSBOARD_PORT)
+
+credentials = provision_manager.provision_device(
+    provision_device_key=PROVISION_DEVICE_KEY,
+    provision_device_secret=PROVISION_DEVICE_SECRET,
+    device_name=DEVICE_NAME
+
+)
+if not credentials:
+    print("Provisioning failed!")
+    raise SystemExit("Exiting: Provisioning unsuccessful.")
+
+print(f"Provisioning successful! Credentials: {credentials}")
+
+access_token = credentials.get("credentialsValue")
+if not access_token:
+    print("No access token found in credentials!")
+    raise SystemExit("Exiting: Access token missing.")
+
+client_id = f"{DEVICE_NAME}_client"
+mqtt_client = TBDeviceMqttClient(host=THINGSBOARD_HOST, port=THINGSBOARD_PORT, access_token=access_token)
+
+try:
+    mqtt_client.connect()
+    print(f"Connected to ThingsBoard server at {THINGSBOARD_HOST}:{THINGSBOARD_PORT}")
+
+    TELEMETRY_DATA = {
+        "temperature": 22.5,
+        "humidity": 60
+    }
+
+    mqtt_client.send_telemetry(TELEMETRY_DATA)
+    print(f"Telemetry sent: {TELEMETRY_DATA}")
+
+except Exception as e:
+    print(f"An error occurred: {e}")
+finally:
+    if mqtt_client.connect():
+        mqtt_client.disconnect()
+        print("Disconnected from ThingsBoard server.")
+    else:
+        print("Client was not connected; no need to disconnect.")
+```
+
+# Claim device
+[**Claim device**](https://thingsboard.io/docs/pe/user-guide/claiming-devices/) is a function designed to handle the device claiming feature in ThingsBoard. It enables sending device claiming requests to the ThingsBoard MQTT broker, allowing dynamic assignment of devices to users or customers.
+
+```python
+from tb_device_mqtt import TBDeviceMqttClient
+
+THINGSBOARD_HOST = "YOUR_THINGSBOARD_HOST"
+THINGSBOARD_PORT = 1883
+DEVICE_TOKEN = "YOUR_DEVICE_TOKEN"
+DURATION_MS = 30000
+SECRET_KEY = "YOUR_SECRET_KEY"
+
+client = TBDeviceMqttClient(THINGSBOARD_HOST, THINGSBOARD_PORT, DEVICE_TOKEN)
+
+try:
+    client.connect()
+
+    client.claim_device(SECRET_KEY, DURATION_MS)
+    print(f"Claim request sent with secretKey: {SECRET_KEY} and durationMs: {DURATION_MS}")
+except Exception as e:
+    print(f"An error occurred: {e}")
+finally:
+    if client.connected:
+        client.disconnect()
+        print("Disconnected from ThingsBoard.")
+```
 ## Other Examples
 
 There are more examples for both [device](https://github.com/thingsboard/thingsboard-python-client-sdk/tree/master/examples/device) and [gateway](https://github.com/thingsboard/thingsboard-python-client-sdk/tree/master/examples/gateway) in corresponding [folders](https://github.com/thingsboard/thingsboard-python-client-sdk/tree/master/examples).
 
 ## Support
 
+ - [Join our Discord](https://discord.gg/mJxDjAM3PF)
  - [Community chat](https://gitter.im/thingsboard/chat)
  - [Q&A forum](https://groups.google.com/forum/#!forum/thingsboard)
  - [Stackoverflow](http://stackoverflow.com/questions/tagged/thingsboard)
