@@ -13,10 +13,7 @@
 #      limitations under the License.
 #
 
-from gc import collect
-
 from sdk_core.device_mqtt import TBDeviceMqttClientBase
-# from sdk_core.provision_client import ProvisionClient
 from .umqtt import MQTTClient, MQTTException
 
 
