@@ -20,10 +20,11 @@ from .umqtt import MQTTClient, MQTTException
 class TBDeviceMqttClient(TBDeviceMqttClientBase):
     def __init__(self, host, port=1883, access_token=None, quality_of_service=None,
                  client_id=None, chunk_size=0):
+        super().__init__(host, port, access_token, quality_of_service, client_id, chunk_size)
         client = MQTTClient(
             self._client_id, self._host, self._port, self._access_token, 'pswd', keepalive=120
         )
-        super().__init__(client, host, port, access_token, quality_of_service, client_id, chunk_size)
+        self.set_client(client)
 
     def connect(self, timeout=5):
         try:

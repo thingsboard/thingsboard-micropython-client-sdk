@@ -24,7 +24,7 @@ REQUIRED_SHARED_KEYS = "{0},{1},{2},{3},{4}".format(
 
 
 class TBDeviceMqttClientBase:
-    def __init__(self, mqtt_client, host, port=1883, access_token=None, quality_of_service=None, client_id=None,
+    def __init__(self, host, port=1883, access_token=None, quality_of_service=None, client_id=None,
                  chunk_size=0):
         self._host = host
         self._port = port
@@ -55,7 +55,10 @@ class TBDeviceMqttClientBase:
         if not client_id:
             client_id = hexlify(unique_id())
         self._client_id = client_id
-        self._client = mqtt_client
+        self._client = None
+
+    def set_client(self, client):
+        self._client = client
 
     def __subscribe_all_required_topics(self):
         self._client.subscribe(ATTRIBUTES_TOPIC, qos=self.quality_of_service)
