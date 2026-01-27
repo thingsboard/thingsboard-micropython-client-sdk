@@ -1,11 +1,12 @@
 {
   "urls": [
+    ["sdk_core/__init__.py", "sdk_core/__init__.py"],
+    ["sdk_core/device_mqtt.py", "sdk_core/device_mqtt.py"],
+    ["sdk_core/sdk_utils.py", "sdk_core/sdk_utils.py"],
     ["thingsboard_sdk/__init__.py", "thingsboard_sdk/__init__.py"],
     ["thingsboard_sdk/manifest.py", "thingsboard_sdk/manifest.py"],
-    ["thingsboard_sdk/sdk_utils.py", "thingsboard_sdk/sdk_utils.py"],
     ["thingsboard_sdk/umqtt.py", "thingsboard_sdk/umqtt.py"],
-    ["thingsboard_sdk/tb_device_mqtt.py", "thingsboard_sdk/tb_device_mqtt.py"],
-    ["thingsboard_sdk/provision_client.py", "thingsboard_sdk/provision_client.py"]
+    ["thingsboard_sdk/tb_device_mqtt.py", "thingsboard_sdk/tb_device_mqtt.py"]
   ],
-  "version": "0.1"
+  "version": "0.2"
 }

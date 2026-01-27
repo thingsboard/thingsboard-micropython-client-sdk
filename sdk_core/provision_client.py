@@ -16,16 +16,13 @@
 from ujson import dumps, loads
 from gc import collect
 
-from .umqtt import MQTTClient
-
 
 class ProvisionClient:
     PROVISION_REQUEST_TOPIC = b"/provision/request"
     PROVISION_RESPONSE_TOPIC = b"/provision/response"
 
-    def __init__(self, host, port, provision_request):
-        self._host = host
-        self._port = port
+    def __init__(self, mqtt_client, provision_request):
+        self._mqtt_client = mqtt_client
         self._client_id = b"provision"
         self._provision_request = provision_request
         self._credentials = None
@@ -45,21 +42,20 @@ class ProvisionClient:
         try:
             collect()
 
-            mqtt_client = MQTTClient(self._client_id, self._host, self._port, keepalive=10)
-            mqtt_client.set_callback(self._on_message)
-            mqtt_client.connect(clean_session=True)
-            mqtt_client.subscribe(self.PROVISION_RESPONSE_TOPIC)
+            self._mqtt_client.set_callback(self._on_message)
+            self._mqtt_client.connect(clean_session=True)
+            self._mqtt_client.subscribe(self.PROVISION_RESPONSE_TOPIC)
             collect()
 
             provision_request_str = dumps(self._provision_request, separators=(',', ':'))
-            mqtt_client.publish(self.PROVISION_REQUEST_TOPIC, provision_request_str)
+            self._mqtt_client.publish(self.PROVISION_REQUEST_TOPIC, provision_request_str)
             del provision_request_str
             collect()
 
-            mqtt_client.wait_msg()
+            # self._mqtt_client.wait_msg()
         finally:
             if mqtt_client:
-                mqtt_client.disconnect()
+                self._mqtt_client.disconnect()
             collect()
 
     @property
