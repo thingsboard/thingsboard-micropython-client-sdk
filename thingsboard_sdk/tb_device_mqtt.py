@@ -14,6 +14,7 @@
 #
 
 from sdk_core.device_mqtt import TBDeviceMqttClientBase
+from .provision_client import ProvisionClient
 from .umqtt import MQTTClient, MQTTException
 
 
@@ -53,3 +54,14 @@ class TBDeviceMqttClient(TBDeviceMqttClientBase):
     def wait_for_msg(self):
         self._client.wait_msg()
 
+    @staticmethod
+    def provision(host, port, provision_request):
+        provision_client = ProvisionClient(host=host, port=port, provision_request=provision_request)
+        provision_client.provision()
+
+        if provision_client.credentials:
+            print("Provisioning successful. Credentials obtained.")
+            return provision_client.credentials
+        else:
+            print("Provisioning failed. No credentials obtained.")
+            return None
