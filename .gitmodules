@@ -1,0 +1,3 @@
+[submodule "sdk_core"]
+	path = sdk_core
+	url = https://github.com/thingsboard/thingsboard-micro-sdk-core
