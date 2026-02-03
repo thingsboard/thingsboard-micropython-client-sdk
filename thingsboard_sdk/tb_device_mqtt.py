@@ -54,6 +54,9 @@ class TBDeviceMqttClient(TBDeviceMqttClientBase):
     def wait_for_msg(self):
         self._client.wait_msg()
 
+    def check_for_msg(self):
+        self._client.check_msg()
+
     @staticmethod
     def provision(host, port, provision_request):
         provision_client = ProvisionClient(host=host, port=port, provision_request=provision_request)
