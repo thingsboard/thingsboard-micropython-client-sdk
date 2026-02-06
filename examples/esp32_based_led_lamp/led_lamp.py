@@ -42,13 +42,12 @@ U16_MAX = 65535
 
 # Fade behavior tuning (time-based)
 FULL_PERIOD_MS = 10000
-FADE_STEP_SLEEP_MS = 100
-FADE_UPDATE_MS = 500
+FADE_UPDATE_MS = 100
 
 # Loop/telemetry intervals
 STAT_PERIOD_MS = 10_000
 MAIN_LOOP_SLEEP_MS = 10
-RELEASE_POLL_MS = 200
+RELEASE_POLL_MS = 100
 
 # RPC method name expected from ThingsBoard dashboard
 RPC_METHOD_SET_BRIGHTNESS = "setBrightnessPct"
@@ -63,8 +62,10 @@ state = {
     "brightness": 0,
     "direction_up": True,
     "percentage_light": 0,
-    "is_touched": False
+    "is_touched": False,
+    "fade_elapsed_ms": 0,
 }
+
 
 def set_brightness_u16(x):
     # Clamp brightness into valid PWM range, then apply it
@@ -74,18 +75,20 @@ def set_brightness_u16(x):
         x = U16_MAX
     led_pwm.duty_u16(x)
 
+
 def calculate_value_from_time(passed_ms):
-    # Map elapsed time (0..FULL_PERIOD_MS) to PWM value (0..U16_MAX)
-    if passed_ms < 0:
-        passed_ms = 0
+    if passed_ms <= 0:
+        return 0
     if passed_ms >= FULL_PERIOD_MS:
-        passed_ms = FULL_PERIOD_MS
-    return int((passed_ms * U16_MAX) / FULL_PERIOD_MS)
+        return U16_MAX
+    return (passed_ms * U16_MAX + (FULL_PERIOD_MS // 2)) // FULL_PERIOD_MS
+
 
 def wait_release(sensor):
     # When we hit min/max, wait until user releases the touch sensor
     while sensor.value() == 1:
         time.sleep_ms(RELEASE_POLL_MS)
+
 
 def connect_to_broker(client):
     # Connect to ThingsBoard MQTT broker with basic error handling
@@ -99,12 +102,13 @@ def connect_to_broker(client):
         print(f"Failed to connect to MQTT broker: {e}")
     return False
 
+
 def send_state_telemetry(client, sensor, state):
     # Prepare and send current device state to ThingsBoard
     telemetry = {
         "brightness": state["brightness"],
         "is_touched": bool(sensor.value()),
-        "percentage_light": int((state["brightness"] * 100) / U16_MAX),
+        "percentage_light": (state["brightness"] * 100 + (U16_MAX // 2)) // U16_MAX,
         "is_growing": state["direction_up"],
     }
     try:
@@ -112,6 +116,7 @@ def send_state_telemetry(client, sensor, state):
     except Exception as e:
         print("[TB] send_telemetry failed:", e)
     return telemetry
+
 
 def parse_rpc_brightness_params(params):
     # Validate and clamp RPC brightness percent (0..100)
@@ -123,6 +128,7 @@ def parse_rpc_brightness_params(params):
     if percents > 100:
         percents = 100
     return percents
+
 
 def on_server_side_rpc_request(request_id, request_body):
     # Called automatically when ThingsBoard sends an RPC request
@@ -163,6 +169,7 @@ def on_server_side_rpc_request(request_id, request_body):
     except Exception as e:
         print("[RPC] handler error:", e)
 
+
 def safe_check_msg(client):
     # Non-blocking poll for incoming MQTT packets (RPC/attribute updates)
     try:
@@ -176,6 +183,7 @@ def safe_check_msg(client):
     except Exception as e:
         print(f"Failed to check messages: {e}")
     return False
+
 
 def send_pending_rpc_reply(client, state):
     # Send RPC reply later from the main loop (avoids heavy work in callback)
@@ -194,58 +202,59 @@ def send_pending_rpc_reply(client, state):
         except Exception as e:
             print("[TB] send_telemetry failed in main loop:", e)
 
+
 def fade(client, sensor, state, direction_up):
-    # Time-based fade while the touch sensor is pressed
+    # Keep direction in state (used by telemetry/UI)
     state["direction_up"] = direction_up
 
-    now = time.ticks_ms()
-    start_brightness = state["brightness"]
-
-    # Continue fade from current level (not from 0/100)
-    if direction_up:
-        elapsed_ms = int((start_brightness * FULL_PERIOD_MS) / U16_MAX)
-    else:
-        elapsed_ms = int(((U16_MAX - start_brightness) * FULL_PERIOD_MS) / U16_MAX)
-    start_time = time.ticks_add(now, -elapsed_ms)
+    press_start_ms = time.ticks_ms()
+    base_elapsed_ms = state.get("fade_elapsed_ms", 0)  # accumulated time from previous presses
 
     while sensor.value() == 1:
-        elapsed = time.ticks_diff(time.ticks_ms(), start_time)
-        progress = calculate_value_from_time(elapsed)
+        # Total "fade time" = previous presses + current hold time
+        held_ms = time.ticks_diff(time.ticks_ms(), press_start_ms)
+        effective_ms = base_elapsed_ms + held_ms
+        if effective_ms >= FULL_PERIOD_MS:
+            effective_ms = FULL_PERIOD_MS
+
+        # progress is 0..U16_MAX
+        progress = calculate_value_from_time(effective_ms)
 
         if direction_up:
-            # Increase toward max
-            inc = int((progress * (U16_MAX - start_brightness)) / U16_MAX)
-            state["brightness"] = start_brightness + inc
-            if state["brightness"] >= U16_MAX:
+            state["brightness"] = progress
+            if effective_ms == FULL_PERIOD_MS:
+                # HOLD at 100% while still pressed
                 state["brightness"] = U16_MAX
-                set_brightness_u16(state["brightness"])
                 state["direction_up"] = False
-                wait_release(sensor)
-                send_state_telemetry(client, sensor, state)
-                break
+                state["fade_elapsed_ms"] = FULL_PERIOD_MS  # keep "completed" state
         else:
-            # Decrease toward 0
-            dec = int((progress * start_brightness) / U16_MAX)
-            state["brightness"] = start_brightness - dec
-            if state["brightness"] <= 0:
+            state["brightness"] = U16_MAX - progress
+            if effective_ms == FULL_PERIOD_MS:
+                # HOLD at 0% while still pressed
                 state["brightness"] = 0
-                set_brightness_u16(state["brightness"])
                 state["direction_up"] = True
-                wait_release(sensor)
-                send_state_telemetry(client, sensor, state)
-                break
+                state["fade_elapsed_ms"] = FULL_PERIOD_MS  # keep "completed" state
 
         set_brightness_u16(state["brightness"])
         send_state_telemetry(client, sensor, state)
         time.sleep_ms(FADE_UPDATE_MS)
-        time.sleep_ms(FADE_STEP_SLEEP_MS)
+
+    # Released: store accumulated time so next press continues smoothly
+    held_ms = time.ticks_diff(time.ticks_ms(), press_start_ms)
+    new_elapsed = base_elapsed_ms + held_ms
+    if new_elapsed > FULL_PERIOD_MS:
+        new_elapsed = FULL_PERIOD_MS
+    state["fade_elapsed_ms"] = new_elapsed
+
+    # If we released exactly at an edge, flip direction and reset for the next fade cycle
+    if state["fade_elapsed_ms"] >= FULL_PERIOD_MS:
+        state["fade_elapsed_ms"] = 0
+        state["direction_up"] = not direction_up
+
 
 def main():
-    # Main loop: handle touch events + periodic telemetry + RPC polling
     prev_touch = 0
     client = TBDeviceMqttClient(HOST, PORT, access_token=ACCESS_TOKEN)
-
-    # Register RPC callback before connecting
     client.set_server_side_rpc_request_handler(on_server_side_rpc_request)
 
     connect_to_broker(client)
@@ -289,5 +298,6 @@ def main():
             client.disconnect()
         except Exception as e:
             print("Could not disconnect client:", e)
+
 
 main()
