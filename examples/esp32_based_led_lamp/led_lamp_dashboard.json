@@ -142,7 +142,7 @@
             },
             "padding": "12px"
           },
-          "title": "Touch state indicator",
+          "title": "Touch State Indicator",
           "dropShadow": false,
           "enableFullscreen": false,
           "widgetStyle": {},
@@ -286,7 +286,7 @@
             "barBackground": "rgba(0, 0, 0, 0.04)",
             "padding": "12px"
           },
-          "title": "LED brightness in percent",
+          "title": "LED Brightness",
           "dropShadow": false,
           "enableFullscreen": false,
           "titleStyle": {
@@ -493,7 +493,7 @@
             },
             "padding": "12px"
           },
-          "title": "LED brightness percent stepper",
+          "title": "LED Brightness Control",
           "dropShadow": false,
           "enableFullscreen": false,
           "widgetStyle": {},
@@ -661,7 +661,7 @@
             },
             "padding": "12px"
           },
-          "title": "Fade direction indicator",
+          "title": "Fade Direction Indicator",
           "dropShadow": false,
           "enableFullscreen": false,
           "widgetStyle": {},
