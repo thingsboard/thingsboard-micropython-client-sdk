@@ -16,7 +16,7 @@ This project is a MicroPython library that provides convenient client SDK for <a
 <a href="https://github.com/thingsboard/thingsboard-micropython-client-sdk/issues">
     <img alt="Discord" src="https://img.shields.io/badge/contributions-welcome-green" />
 </a>
-<a href=https://github.com/thingsboard/thingsboard-micropython-client-sdk/releases/latest">
+<a href="https://github.com/thingsboard/thingsboard-micropython-client-sdk/releases/latest">
     <img alt="Discord" src="https://img.shields.io/github/v/release/thingsboard/thingsboard-micropython-client-sdk" />
 </a>
 <a href="https://discord.gg/mJxDjAM3PF">
