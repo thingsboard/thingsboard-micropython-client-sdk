@@ -1,4 +1,4 @@
-# ThingsBoard MQTT client MicroPython SDK
+# ThingsBoard MicroPython Client SDK
 
 <p align="center" style="text-align: center">
     <a href="https://thingsboard.io"><img alt="ThingsBoard" src="./logo.png?raw=true" width="128" height="128"></a>
