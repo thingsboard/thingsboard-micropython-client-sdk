@@ -1,6 +1,6 @@
 """
-MicroPython example for connecting to Wi-Fi and claiming a device
-using the ThingsBoard SDK.
+MicroPython example: connect to Wi-Fi and claim a device in ThingsBoard
+using the ThingsBoard MicroPython Client SDK.
 """
 
 import network
@@ -8,76 +8,68 @@ import time
 
 from thingsboard_sdk.tb_device_mqtt import TBDeviceMqttClient
 
-
+# --- Wi-Fi settings ---
 WIFI_SSID = "YOUR_SSID"
 WIFI_PASSWORD = "YOUR_PASSWORD"
 
-# ThingsBoard server we want to connect to
+# --- ThingsBoard connection settings ---
 THINGSBOARD_HOST = "thingsboard.cloud"
-
-# MQTT port used to communicate with the server:
-# 1883 - default unencrypted MQTT port
-# 8883 - default encrypted SSL MQTT port
+# 1883 = MQTT without TLS, 8883 = MQTT with TLS
 THINGSBOARD_PORT = 1883
 
-# See https://thingsboard.io/docs/getting-started-guides/helloworld/
-# to understand how to obtain an access token
+# Device access token (from ThingsBoard device details)
 ACCESS_TOKEN = "YOUR_ACCESS_TOKEN"
 
-# Customer should enter this key in the device claiming widget
-SECRET_KEY = "123"
+# Customer enters this key in the Device Claiming widget
+SECRET_KEY = "DEVICE_SECRET_KEY"
 
-# Claiming duration in milliseconds
-DURATION = 30000
+# Claiming duration in milliseconds (how long the claim request is valid)
+DURATION_MS = 30000
 
+# --- Connect to Wi-Fi ---
+wlan = network.WLAN(network.STA_IF)
+wlan.active(True)
 
-def connect_wifi():
-    wlan = network.WLAN(network.STA_IF)
-    wlan.active(True)
+if not wlan.isconnected():
+    print('Connecting to network...')
+    wlan.connect(WIFI_SSID, WIFI_PASSWORD)
+    while not wlan.isconnected():
+        pass
 
-    if not wlan.isconnected():
-        print("Connecting to Wi-Fi...")
-        wlan.connect(WIFI_SSID, WIFI_PASSWORD)
+print("Wi-Fi connected! Network config:", wlan.ifconfig())
 
-        while not wlan.isconnected():
-            time.sleep_ms(300)
+client = None
 
-    print("Connected to Wi-Fi:", wlan.ifconfig())
-    return wlan
+try:
+    # Create ThingsBoard MQTT client
+    client = TBDeviceMqttClient(
+        host=THINGSBOARD_HOST,
+        port=THINGSBOARD_PORT,
+        access_token=ACCESS_TOKEN,
+    )
 
+    # Connect to ThingsBoard
+    print("Connecting to ThingsBoard...")
+    client.connect()
+    print("Connected to ThingsBoard")
 
-def main():
-    client = None
+    # Send device claiming request
+    print("Sending claiming request...")
+    client.claim_device(secret_key=SECRET_KEY, duration_ms=DURATION_MS)
+    print("Claiming request was sent")
 
-    try:
-        connect_wifi()
+    # Keep the script alive for the claiming window
+    # (so the device stays online while the claim is performed)
+    time.sleep_ms(DURATION_MS)
 
-        # Initialize client to communicate with ThingsBoard
-        client = TBDeviceMqttClient(
-            host=THINGSBOARD_HOST,
-            port=THINGSBOARD_PORT,
-            access_token=ACCESS_TOKEN
-        )
+except Exception as e:
+    print("Failed to execute device claiming:", e)
 
-        # Connect to ThingsBoard
-        client.connect()
-        print("Connected to ThingsBoard")
-
-        # Send claiming request
-        client.claim_device(secret_key=SECRET_KEY, duration_ms=DURATION)
-        print("Claiming request was sent")
-
-        # Keep connection alive during the claiming period
-        time.sleep_ms(DURATION)
-
-    except Exception as e:
-        print("Failed to execute device claiming:", e)
-
-    finally:
-        if client is not None:
+finally:
+    # Disconnect cleanly
+    if client is not None:
+        try:
             client.disconnect()
-        print("Connection closed")
-
-
-if __name__ == "__main__":
-    main()
+        except Exception as e:
+            print("Disconnect failed:", e)
+    print("Connection closed")
