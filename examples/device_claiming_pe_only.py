@@ -8,11 +8,9 @@ import time
 
 from thingsboard_sdk.tb_device_mqtt import TBDeviceMqttClient
 
-# --- Wi-Fi settings ---
 WIFI_SSID = "YOUR_SSID"
 WIFI_PASSWORD = "YOUR_PASSWORD"
 
-# --- ThingsBoard connection settings ---
 THINGSBOARD_HOST = "thingsboard.cloud"
 # 1883 = MQTT without TLS, 8883 = MQTT with TLS
 THINGSBOARD_PORT = 1883
@@ -26,7 +24,6 @@ SECRET_KEY = "DEVICE_SECRET_KEY"
 # Claiming duration in milliseconds (how long the claim request is valid)
 DURATION_MS = 30000
 
-# --- Connect to Wi-Fi ---
 wlan = network.WLAN(network.STA_IF)
 wlan.active(True)
 
